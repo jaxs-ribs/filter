@@ -2,6 +2,8 @@ use llm_types::openai::ChatParams;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use serde_json::Value;
+
 
 use kinode_process_lib::{
     await_message, call_init, println, Address, ProcessId, Request, Response, http, Message, get_blob 
@@ -40,12 +42,18 @@ fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
         Message::Request { ref body, .. } => {
             let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
             let http_request = server_request.request()?;
-
             let body = get_blob()?;
+            // println!("Method is {:?}", http_request.method());
+            // println!("Entire http request is {:?}", http_request);
+            // println!("headers are {:?}", http_request.headers());
+            // println!("body is {:?}", body);
             let bound_path = http_request.bound_path(Some(PROCESS_ID));
             match bound_path {
                 "/status" => {
-                    fetch_status(our, message);
+                    fetch_status(our);
+                }
+                "/send" => {
+                    send_tweet(our, &body.bytes);
                 }
                 _ => {}
             }
@@ -54,7 +62,25 @@ fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
     None
 }
 
-fn fetch_status(our: &Address, message: &Message) -> Option<()> {
+fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
+    // let tweet_text = std::str::from_utf8(body).ok()?;
+    // println!("Decoded tweet text: {:?}", tweet_text);
+    // println!("body: {:?}", body);
+    // None
+    let body_str = std::str::from_utf8(body).ok()?;
+    let parsed: Value = serde_json::from_str(body_str).ok()?;
+    if let Some(tweets) = parsed["tweets"].as_array() {
+        for tweet in tweets {
+            if let Some(tweet_str) = tweet.as_str() {
+                println!("Tweet: {}", tweet_str);
+            }
+        }
+    }
+    None
+}
+// TODO: Zena: THe problem is that we're first getting a preflight request!
+
+fn fetch_status(our: &Address) -> Option<()> {
     let mut rng = rand::thread_rng();
     let status = if rng.gen() { "AAA" } else { "BBB" };
     let response = serde_json::to_string(&status).ok()?;
@@ -101,7 +127,7 @@ fn create_chat_params(messages: Vec<GroqMessage>) -> ChatParams {
 call_init!(init);
 fn init(our: Address) {
     println!("filter: begin");
-    let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status"]);
+    let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status", "/send"]);
     // let _ = make_request(&our);
 
     loop {
