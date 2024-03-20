@@ -50,7 +50,14 @@ fn fetch_status(our: &Address, message: &Message) -> Option<()> {
     let mut rng = rand::thread_rng();
     let status = if rng.gen() { "AAA" } else { "BBB" };
     let response = serde_json::to_string(&status).ok()?;
-    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+    let headers = HashMap::from([
+        ("Content-Type".to_string(), "application/json".to_string()),
+        ("Access-Control-Allow-Origin".to_string(), "*".to_string()),
+        // Allow Content-Type and other necessary headers
+        ("Access-Control-Allow-Headers".to_string(), "Content-Type".to_string()),
+        // Optionally, specify the methods allowed
+        ("Access-Control-Allow-Methods".to_string(), "GET, POST, OPTIONS".to_string()),
+    ]);
     println!("sending response: {}", response);
     let _ = http::send_response(http::StatusCode::OK, Some(headers), response.as_bytes().to_vec());
     None
@@ -59,12 +66,15 @@ fn fetch_status(our: &Address, message: &Message) -> Option<()> {
 call_init!(init);
 fn init(our: Address) {
     println!("filter: begin");
-    let _ = http::serve_index_html(&our, "ui", true, false, vec!["/", "/status"]);
+    // TODO: Zena: Here's the problem, you need to serve to the extension. 
+    let _ = http::serve_index_html(&our, "ui", false, false, vec!["/", "/status"]);
+    // TODO: Zena: Local only to true
 
     loop {
         let Ok(message) = await_message() else {
             continue;
         };
+        println!("Message from: {}", message.source().process);
         if message.source().node != our.node {
             continue;
         }
