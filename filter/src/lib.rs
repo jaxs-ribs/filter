@@ -1,3 +1,4 @@
+use llm_types::openai::{ChatParams, Message};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -6,6 +7,12 @@ use kinode_process_lib::{
     await_message, call_init, println, Address, ProcessId, Request, Response, http, Message, get_blob 
 };
 use std::collections::HashMap;
+
+mod groq_api;
+mod llm_types;
+
+use llm_types::openai::Message as GroqMessage;
+use groq_api::{GroqApi, spawn_groq_pkg};
 
 wit_bindgen::generate!({
     path: "wit",
@@ -16,6 +23,7 @@ wit_bindgen::generate!({
 });
 
 const PROCESS_ID: &str = "filter:filter:template.os";
+const GROQ_KEY: &str = include_str!("../../pkg/.groq_key");
 
 fn handle_internal_messages(our: &Address) -> anyhow::Result<()> {
     let message = await_message()?;
@@ -61,6 +69,33 @@ fn fetch_status(our: &Address, message: &Message) -> Option<()> {
     let _ = http::send_response(http::StatusCode::OK, Some(headers), response.as_bytes().to_vec());
     None
 }
+
+fn make_request(our: &Address) -> anyhow::Result<()> {
+    let api = spawn_groq_pkg(GROQ_KEY, our)?;
+    let system_prompt = GroqMessage {
+        role: "system".into(),
+        content: "You are a helpful assistant.".into(),
+    };
+    let test_prompt = GroqMessage {
+        role: "user".into(),
+        content: "What is the meaning of life?".into(),
+    };
+    let chat_params = create_chat_params(vec![system_prompt, test_prompt]);
+    let result = GroqApi::chat(&self, chat_params, provider);
+    Ok(())
+}
+
+fn create_chat_params(messages: Vec<Message>) -> ChatParams {
+    let chat_params = ChatParams {
+        model: "mixtral-8x7b-32768".into(), 
+        messages,
+        max_tokens: Some(1200),
+        temperature: Some(0.0),
+        ..Default::default()
+    };
+    chat_params
+}
+
 
 call_init!(init);
 fn init(our: Address) {
