@@ -102,8 +102,7 @@ call_init!(init);
 fn init(our: Address) {
     println!("filter: begin");
     let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status"]);
-
-    let _ = make_request(&our);
+    // let _ = make_request(&our);
 
     loop {
         let Ok(message) = await_message() else {
