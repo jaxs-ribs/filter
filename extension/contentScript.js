@@ -1,49 +1,3 @@
-// // Add at the top
-// function fetchStatusAndReplaceText() {
-//     fetch('http://localhost:8080/filter:filter:template.os/status', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({})
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error('Network response was not ok');
-//         }
-//         return response.text();
-//     })
-//     .then(status => {
-//         console.log("Fetched status:", status); // Added line to print the response text in console
-//         replaceText(document.body, status);
-//         observeMutations(document.body, status);
-//     })
-//     .catch(error => console.error("Failed to fetch status:", error));
-// }
-
-// // Modify the replaceText function to accept status
-// function replaceText(node, status) {
-//     if (node.nodeType === 3) {
-//         node.nodeValue = node.nodeValue.replace(/the/g, status);
-//     } else {
-//         node.childNodes.forEach(child => replaceText(child, status));
-//     }
-// }
-
-// // Modify the observeMutations function to accept status
-// function observeMutations(element, status) {
-//     const observer = new MutationObserver((mutations) => {
-//         mutations.forEach((mutation) => {
-//             mutation.addedNodes.forEach(node => replaceText(node, status));
-//         });
-//     });
-
-//     observer.observe(element, {
-//         childList: true,
-//         subtree: true
-//     });
-// }
-// Replace direct calls with the new function
-// fetchStatusAndReplaceText();
-
 window.waitTill = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function retrieveTweetContents() {
@@ -57,6 +11,7 @@ async function retrieveTweetContents() {
     }
 
     let tweetContents = [];
+    let tweetElements = []; // Store references to tweet DOM elements
 
     for (const tweet of tweets) {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
@@ -73,6 +28,7 @@ async function retrieveTweetContents() {
 
         if (content) {
             tweetContents.push(content);
+            tweetElements.push(tweet); // Add the tweet element to the array
         }
     }
 
@@ -93,6 +49,15 @@ async function retrieveTweetContents() {
             })
             .then(data => {
                 console.log("Server response:", data);
+                // Assuming data.tweets is the array of modified tweet texts
+                data.tweets.forEach((modifiedText, index) => {
+                    // Find the text container within the tweet element
+                    const textContainer = tweetElements[index].querySelector("[data-testid=tweetText]");
+                    if (textContainer) {
+                        // Replace the text content
+                        textContainer.innerText = modifiedText;
+                    }
+                });
             })
             .catch(error => {
                 console.error("Failed to send tweets:", error);
@@ -105,9 +70,11 @@ async function retrieveTweetContents() {
 retrieveTweetContents().then((contents) => {
     console.log(contents);
 });
+
 fetch('http://localhost:8080/filter:filter:template.os/status', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: 'this is a test'
 })
 .then(response => {
     if (!response.ok) {
