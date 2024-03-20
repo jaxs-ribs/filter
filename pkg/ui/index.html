@@ -5,12 +5,6 @@
   <meta charset="UTF-8" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-    rel="stylesheet">
-  <link rel="icon"
-    href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzc5IiBoZWlnaHQ9IjUxNCIgdmlld0JveD0iMCAwIDc3OSA1MTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8c3R5bGU+CiAgICAgICAgQG1lZGlhIChwcmVmZXJzLWNvbG9yLXNjaGVtZTogZGFyaykgewogICAgICAgICAgICBzdmcgeyBmaWxsOiB3aGl0ZTsgfQogICAgICAg...(line too long; chars omitted)
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
   <style>
     body {
@@ -30,14 +24,23 @@
 
   <script>
     function fetchStatus() {
-      fetch('/status')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('statusResult').innerText = data;
-        })
-        .catch(error => {
-          console.error("Failed to fetch status:", error);
-        });
+      fetch('/filter:filter:template.os/status', {
+        method: 'POST', // Specify the method to use
+        headers: {
+          'Content-Type': 'application/json' // Specify the content type
+        },
+        body: JSON.stringify({}) // Send an empty object as the body
+      })
+      .then(response => {
+        console.log("Raw response:", response);
+        return response.text(); // Changed from response.json() to response.text() to handle plain text response
+      })
+      .then(data => {
+        document.getElementById('statusResult').innerText = `Status: ${data}`; // Adjusted to properly display the plain text response
+      })
+      .catch(error => {
+        console.error("Failed to fetch status:", error);
+      });
     }
   </script>
 </body>

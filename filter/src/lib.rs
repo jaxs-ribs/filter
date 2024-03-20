@@ -1,9 +1,11 @@
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use kinode_process_lib::{
-    await_message, call_init, println, Address, ProcessId, Request, Response,
+    await_message, call_init, println, Address, ProcessId, Request, Response, http, Message, get_blob 
 };
+use std::collections::HashMap;
 
 wit_bindgen::generate!({
     path: "wit",
@@ -13,9 +15,9 @@ wit_bindgen::generate!({
     },
 });
 
-type MessageArchive = Vec<(String, String)>;
+const PROCESS_ID: &str = "filter:filter:template.os";
 
-fn handle_message(our: &Address, message_archive: &mut MessageArchive) -> anyhow::Result<()> {
+fn handle_internal_messages(our: &Address) -> anyhow::Result<()> {
     let message = await_message()?;
 
     if !message.is_request() {
@@ -24,11 +26,9 @@ fn handle_message(our: &Address, message_archive: &mut MessageArchive) -> anyhow
     Ok(())
 }
 
-fn handle_http_messages(our: &Address, message: &Message) -> Option<State> {
+fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
     match message {
-        Message::Response { .. } => {
-            return None;
-        }
+        Message::Response { .. } => {}
         Message::Request { ref body, .. } => {
             let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
             let http_request = server_request.request()?;
@@ -37,27 +37,23 @@ fn handle_http_messages(our: &Address, message: &Message) -> Option<State> {
             let bound_path = http_request.bound_path(Some(PROCESS_ID));
             match bound_path {
                 "/status" => {
-                    return fetch_status(our, message);
+                    fetch_status(our, message);
                 }
-                "/config" => {
-                    return config(&body.bytes);
-                }
-                "/addnft" => {
-                    return add_nft(&body.bytes);
-                }
-                "/removenft" => {
-                    return remove_nft(&body.bytes);
-                }
-                "/listnfts" => {
-                    println!("listing nfts");
-                    return list_nfts();
-                }
-                _ => {
-                    return None;
-                }
+                _ => {}
             }
         }
     }
+    None
+}
+
+fn fetch_status(our: &Address, message: &Message) -> Option<()> {
+    let mut rng = rand::thread_rng();
+    let status = if rng.gen() { "AAA" } else { "BBB" };
+    let response = serde_json::to_string(&status).ok()?;
+    let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+    println!("sending response: {}", response);
+    let _ = http::send_response(http::StatusCode::OK, Some(headers), response.as_bytes().to_vec());
+    None
 }
 
 call_init!(init);
@@ -75,9 +71,9 @@ fn init(our: Address) {
 
         if message.source().process == "http_server:distro:sys" {
             let state = handle_http_messages(&our, &message);
-            let _ = modify_session(&our, &mut session, state);
+            // let _ = modify_session(&our, &mut session, state);
         } else {
-            match handle_internal_messages(&message, &mut session) {
+            match handle_internal_messages(&our) {
                 Ok(()) => {}
                 Err(e) => {
                     println!("auctioneer: error: {:?}", e);
