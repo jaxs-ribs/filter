@@ -1,4 +1,4 @@
-use llm_types::openai::{ChatParams, Message};
+use llm_types::openai::ChatParams;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -71,7 +71,7 @@ fn fetch_status(our: &Address, message: &Message) -> Option<()> {
 }
 
 fn make_request(our: &Address) -> anyhow::Result<()> {
-    let api = spawn_groq_pkg(GROQ_KEY, our)?;
+    let api = spawn_groq_pkg(our, GROQ_KEY)?;
     let system_prompt = GroqMessage {
         role: "system".into(),
         content: "You are a helpful assistant.".into(),
@@ -81,11 +81,12 @@ fn make_request(our: &Address) -> anyhow::Result<()> {
         content: "What is the meaning of life?".into(),
     };
     let chat_params = create_chat_params(vec![system_prompt, test_prompt]);
-    let result = GroqApi::chat(&self, chat_params, provider);
+    let result = GroqApi::chat(&api, chat_params);
+    println!("result: {:?}", result);
     Ok(())
 }
 
-fn create_chat_params(messages: Vec<Message>) -> ChatParams {
+fn create_chat_params(messages: Vec<GroqMessage>) -> ChatParams {
     let chat_params = ChatParams {
         model: "mixtral-8x7b-32768".into(), 
         messages,
@@ -101,6 +102,8 @@ call_init!(init);
 fn init(our: Address) {
     println!("filter: begin");
     let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status"]);
+
+    let _ = make_request(&our);
 
     loop {
         let Ok(message) = await_message() else {

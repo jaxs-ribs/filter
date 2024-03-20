@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::llm_types::openai::{ChatParams, ChatRequest, LLMRequest, LLMResponse, Message, Provider};
 
-pub fn spawn_groq_pkg(our: Address, groq_key: &str) -> anyhow::Result<GroqApi> {
+pub fn spawn_groq_pkg(our: &Address, groq_key: &str) -> anyhow::Result<GroqApi> {
     let groq_pkg_path = format!("{}/pkg/groq.wasm", our.package_id());
     let our_caps = our_capabilities();
     let http_client = ProcessId::from_str("http_client:distro:sys").unwrap();
@@ -42,11 +42,11 @@ impl GroqApi {
         }
     }
 
-    pub fn chat(&self, chat_params: ChatParams, provider: Provider) -> anyhow::Result<Message> {
+    pub fn chat(&self, chat_params: ChatParams) -> anyhow::Result<Message> {
         let chat_request = ChatRequest {
             params: chat_params,
             api_key: self.groq_key.clone(),
-            provider,
+            provider: Provider::Groq,
         };
         let request = LLMRequest::Chat(chat_request);
         let msg = Request::new()
