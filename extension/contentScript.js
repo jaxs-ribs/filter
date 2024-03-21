@@ -2,6 +2,8 @@ let globalTweetMap = new Map();
 
 async function retrieveAndModifyTweetContents() {
     const tweets = document.querySelectorAll("article");
+    let newTweets = []; // Array to hold new tweets
+
     for (const tweet of tweets) {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
         let content = "";
@@ -15,31 +17,58 @@ async function retrieveAndModifyTweetContents() {
             }
         }
 
+        // Add new tweets to the array instead of sending them immediately
         if (content && !globalTweetMap.has(content)) {
-            // Send the tweet for modification immediately
-            const requestBody = JSON.stringify({ tweet: content });
-            console.log("Sending tweet for modification:", requestBody);
-            try {
-                const response = await fetch('http://localhost:8080/filter:filter:template.os/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: requestBody
-                });
-                const data = await response.json();
-                // Adjusting to correctly access the modified tweet from the server's response
-                const modifiedText = data.tweet || "Modification failed"; // Use the correct key here
-                globalTweetMap.set(content, modifiedText);
+            newTweets.push(content);
+        }
+    }
 
-                // Now, modify the tweet content on the webpage
-                textsDom.forEach(textDom => {
-                    if (textDom.tagName.toLowerCase() === "span") {
-                        textDom.innerText = modifiedText;
+    // Check if there are new tweets to send
+    if (newTweets.length > 0) {
+        console.log("Sending new tweets for modification:", newTweets);
+        try {
+            const requestBody = JSON.stringify({ tweets: newTweets });
+            const response = await fetch('http://localhost:8080/filter:filter:template.os/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: requestBody
+            });
+            // Adjust the part where you handle the server response
+            const data = await response.json();
+            // Access the 'tweets' key to get the array of modified tweets
+            const modifiedTweets = data.tweets || []; // Ensure it falls back to an empty array if undefined
+
+            // Iterate over the modifiedTweets array instead of the raw data object
+            modifiedTweets.forEach((modifiedText, index) => {
+                const originalText = newTweets[index];
+                globalTweetMap.set(originalText, modifiedText || "Modification failed");
+
+                // Find the original tweet DOM based on the content and modify it
+                tweets.forEach(tweet => {
+                    const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
+                    let tweetContent = "";
+                    textsDom.forEach(textDom => {
+                        if (textDom.tagName.toLowerCase() === "span") {
+                            tweetContent += textDom.innerText;
+                        }
+                        if (textDom.tagName.toLowerCase() === "img") {
+                            tweetContent += textDom.getAttribute("alt");
+                        }
+                    });
+
+                    if (tweetContent === originalText) {
+                        // Now, modify the tweet content on the webpage
+                        textsDom.forEach(textDom => {
+                            if (textDom.tagName.toLowerCase() === "span") {
+                                textDom.innerText = modifiedText || "Modification failed";
+                            }
+                            // For images, consider how you want to handle modifications
+                        });
                     }
-                    // For images, consider how you want to handle modifications
                 });
-            } catch (error) {
-                console.error("Failed to modify tweet:", error);
-            }
+            });
+        } catch (error) {
+            console.error("Failed to modify tweets:", error);
         }
     }
 }
