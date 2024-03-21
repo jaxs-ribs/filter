@@ -70,12 +70,12 @@ fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
 }
 
 fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
-    let tweets: Vec<String> = match serde_json::from_slice::<serde_json::Value>(body).ok()?["tweets"].as_array() {
-        Some(tweets) => tweets.iter().filter_map(|tweet| tweet.as_str().map(String::from)).collect(),
-        None => vec![],
+    let tweet: String = match serde_json::from_slice::<serde_json::Value>(body).ok()?["tweet"].as_str() {
+        Some(tweet) => tweet.to_string(),
+        None => return None,
     };
-    let modified_tweets: Vec<String> = tweets.iter().map(|tweet| tweet.to_uppercase()).collect();
-    let response_body = serde_json::to_string(&serde_json::json!({ "tweets": modified_tweets })).ok()?;
+    let modified_tweet = tweet.to_uppercase(); // Example modification
+    let response_body = serde_json::to_string(&serde_json::json!({ "tweet": modified_tweet })).ok()?;
     // TODO: Zena: Is this OK? 
     let headers = HashMap::from([
         ("Content-Type".to_string(), "application/json".to_string()),
@@ -83,7 +83,7 @@ fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
         ("Access-Control-Allow-Headers".to_string(), "Content-Type".to_string()),
         ("Access-Control-Allow-Methods".to_string(), "GET, POST, OPTIONS".to_string()),
     ]);
-    println!("sending tweets response: {}", response_body);
+    println!("sending tweet response: {}", response_body);
     let _ = http::send_response(http::StatusCode::OK, Some(headers), response_body.as_bytes().to_vec());
     None
 }
