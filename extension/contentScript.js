@@ -1,5 +1,6 @@
 let globalTweetMap = new Map();
 
+// TODO: Zena: When scrolling back up, the tweet is reloaded, but not in the hashmap anymore. Maybe not important for now though, maybe another time. 
 async function retrieveAndModifyTweetContents() {
     const tweets = document.querySelectorAll("article");
     let newTweets = []; // Array to hold new tweets
