@@ -8,4 +8,4 @@ pkg/*.wasm
 */wasi_snapshot_preview1.wasm
 */wit/
 */process_env
-pkg/.groq_key
+pkg/.openai_key
