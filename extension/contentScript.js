@@ -18,13 +18,11 @@ async function retrieveAndModifyTweetContents() {
             }
         }
 
-        // Add new tweets to the array instead of sending them immediately
         if (content && !globalTweetMap.has(content)) {
             newTweets.push(content);
         }
     }
 
-    // Check if there are new tweets to send
     if (newTweets.length > 0) {
         console.log("Sending new tweets for modification:", newTweets);
         try {
@@ -32,19 +30,17 @@ async function retrieveAndModifyTweetContents() {
             const response = await fetch('http://localhost:8080/filter:filter:template.os/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: requestBody
+                body: requestBody,
             });
-            // Adjust the part where you handle the server response
             const data = await response.json();
-            // Access the 'tweets' key to get the array of modified tweets
-            const modifiedTweets = data.tweets || []; // Ensure it falls back to an empty array if undefined
+            // Assuming 'tweet_results' is an array of booleans corresponding to each tweet
+            const tweetResults = data.tweet_results || [];
 
-            // Iterate over the modifiedTweets array instead of the raw data object
-            modifiedTweets.forEach((modifiedText, index) => {
+            tweetResults.forEach((result, index) => {
                 const originalText = newTweets[index];
-                globalTweetMap.set(originalText, modifiedText || "Modification failed");
-
-                // Find the original tweet DOM based on the content and modify it
+                // Store the result (true or false) directly in the globalTweetMap
+                globalTweetMap.set(originalText, result);
+                
                 tweets.forEach(tweet => {
                     const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
                     let tweetContent = "";
@@ -58,10 +54,10 @@ async function retrieveAndModifyTweetContents() {
                     });
 
                     if (tweetContent === originalText) {
-                        // Now, modify the tweet content on the webpage
+                        // Modify the tweet content color based on the modification result
                         textsDom.forEach(textDom => {
                             if (textDom.tagName.toLowerCase() === "span") {
-                                textDom.innerText = modifiedText || "Modification failed";
+                                textDom.style.color = result ? "green" : "grey";
                             }
                             // For images, consider how you want to handle modifications
                         });
@@ -73,5 +69,4 @@ async function retrieveAndModifyTweetContents() {
         }
     }
 }
-
 setInterval(retrieveAndModifyTweetContents, 5000); // Check for new tweets every 5 seconds
