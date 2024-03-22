@@ -3,6 +3,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
+use crate::llm_types::openai::Provider;
 
 use kinode_process_lib::{
     await_message, call_init, get_blob, http, println, Address, Message, ProcessId, Request,
@@ -10,11 +11,11 @@ use kinode_process_lib::{
 };
 use std::collections::HashMap;
 
-mod groq_api;
+mod llm_api;
 mod llm_types;
 
-use groq_api::{spawn_groq_pkg, GroqApi};
-use llm_types::openai::Message as GroqMessage;
+use llm_api::{spawn_openai_pkg, OpenaiApi};
+use llm_types::openai::Message as OpenaiMessage;
 
 wit_bindgen::generate!({
     path: "wit",
@@ -25,7 +26,7 @@ wit_bindgen::generate!({
 });
 
 const PROCESS_ID: &str = "filter:filter:template.os";
-const GROQ_KEY: &str = include_str!("../../pkg/.groq_key");
+const OPENAI_API: &str = include_str!("../../pkg/.openai_key");
 
 // TODO: Zena: Is this OK? Look where it's being used.
 fn default_headers() -> HashMap<String, String> {
@@ -46,7 +47,7 @@ fn handle_internal_messages(our: &Address) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
+fn handle_http_messages(our: &Address, message: &Message, api: &OpenaiApi) -> Option<()> {
     match message {
         Message::Response { .. } => {}
         Message::Request { ref body, .. } => {
@@ -65,7 +66,7 @@ fn handle_http_messages(our: &Address, message: &Message) -> Option<()> {
                     fetch_status(our);
                 }
                 "/send" => {
-                    send_tweet(our, &body.bytes);
+                    send_tweet(our, &body.bytes, api);
                 }
                 _ => {}
             }
@@ -87,7 +88,7 @@ fn fetch_status(our: &Address) -> Option<()> {
     None
 }
 
-fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
+fn send_tweet(our: &Address, body: &[u8], api: &OpenaiApi) -> Option<()> {
     let tweets: Vec<String> =
         match serde_json::from_slice::<serde_json::Value>(body).ok()?["tweets"].as_array() {
             Some(tweets) => tweets
@@ -96,8 +97,9 @@ fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
                 .collect(),
             None => vec![],
         };
-    let mut rng = rand::thread_rng();
-    let tweet_results: Vec<bool> = tweets.iter().map(|_| rng.gen()).collect();
+    let tweet_results = make_request(our, &tweets, api).ok()?;
+    assert_eq!(tweets.len(), tweet_results.len(), "Tweets and results length mismatch");
+
     let response_body =
         serde_json::to_string(&serde_json::json!({ "tweet_results": tweet_results })).ok()?;
     println!("sending tweet results: {}", response_body);
@@ -109,40 +111,55 @@ fn send_tweet(our: &Address, body: &[u8]) -> Option<()> {
     None
 }
 
-// TODO: Zena: THe problem is that we're first getting a preflight request!
+fn make_request(our: &Address, tweets: &[String], api: &OpenaiApi) -> anyhow::Result<Vec<bool>> {
+    let temp_rules: Vec<String> = vec![
+        "Nothing related to tech.".into(),
+        "Nothing related to finance.".into(),
+    ];
+    let content = format!(r###"
+    I am going to give you a series of tweets, and a series of rules. 
 
-fn make_request(our: &Address, tweets: &[String]) -> anyhow::Result<()> {
-    let api = spawn_groq_pkg(our, GROQ_KEY)?;
-    let content = r###"
-    You are a helpful assistant that helps to filter out tweets that don't adhere to certain rules. 
-    These rules are as follows: 
-    - Does not talk about a technical topic
-    - Talks about a memecoin
-    - Uses profanity
-    You will receive a series of tweets. For each of the tweets, you either answer y or n, with y meaning the tweet passes the aforementioned rules and n meaning it does not.
+    The rules are: 
+    {}
+
+    The tweets are: 
+    {}
+
+    For each of the tweets, respond 0 if they break one or more rules, and 1 if they don't break any rules. 
+    Do not answer with anything else but 0 or 1. No part of the answer should contain anything but the symbols 0 or 1.
     The tweets are delimited by |||.
-    Don't answer with anything else, only y or n. Don't even use a space between anything, the entire output should just be a series of y's and n's.
-    "###;
-    let system_prompt = GroqMessage {
+    "###,
+        temp_rules.join("\n"), tweets.join("|||\n"),
+    );
+    let system_prompt = OpenaiMessage {
         role: "system".into(),
+        content: "You are a helpful assistant that will only answer with 0 or 1".into(),
+    };
+    let test_prompt = OpenaiMessage {
+        role: "user".into(),
         content: content.into(),
     };
-    let content = tweets.join("|||\n");
-    let test_prompt = GroqMessage {
-        role: "user".into(),
-        content: "What is the meaning of life?".into(),
-    };
     let chat_params = create_chat_params(vec![system_prompt, test_prompt]);
-    let result = GroqApi::chat(&api, chat_params);
-    println!("Groq result: {:?}", result);
-    Ok(())
+    let result = OpenaiApi::chat(&api, chat_params)?.content;
+    println!("Openai result: {:?}", result);
+    let bools = parse_response_to_bool_array(&result);
+    Ok(bools)
 }
 
-fn create_chat_params(messages: Vec<GroqMessage>) -> ChatParams {
+fn parse_response_to_bool_array(response: &str) -> Vec<bool> {
+    response.chars().filter_map(|c| match c {
+        '1' => Some(true),
+        '0' => Some(false),
+        _ => None,
+    }).collect()
+}
+
+
+fn create_chat_params(messages: Vec<OpenaiMessage>) -> ChatParams {
     let chat_params = ChatParams {
-        model: "mixtral-8x7b-32768".into(),
+        model: "gpt-4-turbo-preview".into(),
         messages,
-        max_tokens: Some(1200),
+        max_tokens: Some(100),
         temperature: Some(0.0),
         ..Default::default()
     };
@@ -153,6 +170,9 @@ call_init!(init);
 fn init(our: Address) {
     println!("filter: begin");
     let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status", "/send"]);
+    let Ok(api) = spawn_openai_pkg(&our, OPENAI_API) else {
+        panic!("Failed to spawn openai pkg");
+    };
     // let _ = make_request(&our);
 
     loop {
@@ -165,7 +185,7 @@ fn init(our: Address) {
         }
 
         if message.source().process == "http_server:distro:sys" {
-            let state = handle_http_messages(&our, &message);
+            let state = handle_http_messages(&our, &message, &api);
             // let _ = modify_session(&our, &mut session, state);
         } else {
             match handle_internal_messages(&our) {
