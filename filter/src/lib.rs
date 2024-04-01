@@ -41,18 +41,22 @@ fn handle_internal_messages() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn handle_http_messages(message: &Message, api: &OpenaiApi) -> Option<()> {
-    match message {
-        Message::Response { .. } => {}
-        Message::Request { ref body, .. } => {
-            let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
-            let http_request = server_request.request()?;
-            if http_request.method().ok()? == http::Method::OPTIONS {
-                // Handle OPTIONS request by returning the necessary CORS headers
-                let _ =
-                    http::send_response(http::StatusCode::OK, Some(default_headers()), Vec::new());
-                return None;
-            }
+fn handle_http_messages(message: &Message, api: &OpenaiApi)  {
+    if let Message::Request { ref body, .. } = message {
+        handle_request(body, api);
+    }
+}
+
+fn handle_request(body: &[u8], api: &OpenaiApi) -> Option<()> {
+    let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
+    let http_request = server_request.request()?;
+    match http_request.method().ok() {
+        Some(http::Method::OPTIONS) => {
+            // Handle OPTIONS request by returning the necessary CORS headers
+            let _ = http::send_response(http::StatusCode::OK, Some(default_headers()), Vec::new());
+            return None;
+        }
+        Some(http::Method::POST) => {
             let body = get_blob()?;
             let bound_path = http_request.bound_path(Some(PROCESS_ID));
             match bound_path {
@@ -62,6 +66,7 @@ fn handle_http_messages(message: &Message, api: &OpenaiApi) -> Option<()> {
                 _ => {}
             }
         }
+        _ => {}
     }
     None
 }
