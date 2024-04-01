@@ -8,8 +8,8 @@ use helpers::default_headers;
 use helpers::extract_tweets;
 
 mod structs;
-use structs::State;
 use structs::Settings;
+use structs::State;
 
 // TODO: Zen: Remove this
 const PROCESS_ID: &str = "filter:filter:template.os";
@@ -25,7 +25,7 @@ wit_bindgen::generate!({
 
 call_init!(init);
 
-fn handle_http_messages(message: &Message, api: &OpenaiApi, state: &mut State)  {
+fn handle_http_messages(message: &Message, api: &OpenaiApi, state: &mut State) {
     if let Message::Request { ref body, .. } = message {
         handle_request(body, api, state);
     }
@@ -45,13 +45,13 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
             let bound_path = http_request.bound_path(Some(PROCESS_ID));
             match bound_path {
                 "/send" => {
-                    filter_tweets(&body.bytes, api);
+                    filter_tweets(&body.bytes, api, state);
                 }
                 "/fetch_settings" => {
                     fetch_settings(state);
                 }
                 "/submit_settings" => {
-                    submit_settings(&body.bytes, api, state);
+                    submit_settings(&body.bytes, state);
                 }
                 _ => {}
             }
@@ -61,7 +61,7 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
     None
 }
 
-fn submit_settings(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
+fn submit_settings(body: &[u8], state: &mut State) -> Option<()> {
     let settings = serde_json::from_slice::<Settings>(body).ok()?;
     state.rules = settings.rules;
     state.is_on = settings.is_on;
@@ -73,7 +73,8 @@ fn fetch_settings(state: &mut State) -> Option<()> {
     let response_body = serde_json::to_string(&serde_json::json!({
         "rules": state.rules,
         "is_on": state.is_on
-    })).ok()?;
+    }))
+    .ok()?;
 
     let _ = http::send_response(
         http::StatusCode::OK,
@@ -83,10 +84,15 @@ fn fetch_settings(state: &mut State) -> Option<()> {
     Some(())
 }
 
-fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
+fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
     let tweets = extract_tweets(body).ok()?;
-    let tweet_results = llm_inference::llm_inference(&tweets, api).ok()?;
-    // TODO: Zen: Sometimes the llm response doesn't return enough responses for all the tweets. Maybe we need to separate them and number them? 
+
+    let tweet_results = if state.is_on {
+        llm_inference::llm_inference(&tweets, &state.rules, api).ok()?
+    } else {
+        tweets.iter().map(|_| false).collect()
+    };
+    // TODO: Zen: Sometimes the llm response doesn't return enough responses for all the tweets. Maybe we need to separate them and number them?
     // assert_eq!(tweets.len(), tweet_results.len(), "Tweets and results length mismatch");
 
     let response_body =
@@ -100,10 +106,15 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
     None
 }
 
-
 fn setup(our: &Address) -> OpenaiApi {
     println!("filter: begin");
-    if let Err(e) = http::serve_index_html(&our, "ui", false, true, vec!["/", "/send", "/fetch_settings", "/submit_settings"]) {
+    if let Err(e) = http::serve_index_html(
+        &our,
+        "ui",
+        false,
+        true,
+        vec!["/", "/send", "/fetch_settings", "/submit_settings"],
+    ) {
         panic!("Error serving index html: {:?}", e);
     }
     let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {
@@ -124,6 +135,6 @@ fn init(our: Address) {
         if message.source().process == "http_server:distro:sys" {
             handle_http_messages(&message, &api, &mut state);
             state.save();
-        } 
+        }
     }
 }
