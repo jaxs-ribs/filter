@@ -17,15 +17,6 @@ const PROCESS_ID: &str = "filter:filter:template.os";
 const OPENAI_API: &str = include_str!("../../pkg/.openai_key");
 
 
-fn handle_internal_messages() -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    if !message.is_request() {
-        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
-    }
-    Ok(())
-}
-
 fn handle_http_messages(message: &Message, api: &OpenaiApi)  {
     if let Message::Request { ref body, .. } = message {
         handle_request(body, api);
@@ -114,13 +105,6 @@ fn init(our: Address) {
 
         if message.source().process == "http_server:distro:sys" {
             handle_http_messages(&message, &api);
-        } else {
-            match handle_internal_messages() {
-                Ok(()) => {}
-                Err(e) => {
-                    println!("auctioneer: error: {:?}", e);
-                }
-            };
-        }
+        } 
     }
 }
