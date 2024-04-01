@@ -62,17 +62,14 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
 }
 
 fn submit_settings(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
-    println!("Submit settings triggerd");
     let settings = serde_json::from_slice::<Settings>(body).ok()?;
     state.rules = settings.rules;
     state.is_on = settings.is_on;
     state.save();
-    println!("State is now {:?}", state);
     None
 }
 
 fn fetch_settings(state: &mut State) -> Option<()> {
-    println!("Found fetch settings");
     let response_body = serde_json::to_string(&serde_json::json!({
         "rules": state.rules,
         "is_on": state.is_on
