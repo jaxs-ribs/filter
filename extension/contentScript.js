@@ -17,6 +17,14 @@ async function retrieveAndModifyTweetContents() {
             }
         }
 
+        // Check the number of bookmark buttons and duplicate if there is exactly one
+        const bookmarkButtons = tweet.querySelectorAll('[data-testid="bookmark"]');
+        if (bookmarkButtons.length === 1) {
+            const bookmarkButton = bookmarkButtons[0];
+            const cloneBookmarkButton = bookmarkButton.cloneNode(true);
+            bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton);
+        }
+
         if (content && !globalTweetMap.has(content)) {
             newTweets.push(content);
             // Initially mark unprocessed tweets as grey
@@ -29,7 +37,6 @@ async function retrieveAndModifyTweetContents() {
     }
 
     if (newTweets.length > 0) {
-        console.log("Sending new tweets for modification:", newTweets);
         try {
             const requestBody = JSON.stringify({ tweets: newTweets });
             const response = await fetch('http://localhost:8080/filter:filter:template.os/send', {
@@ -64,6 +71,7 @@ async function retrieveAndModifyTweetContents() {
                             });
                     
                             // Check if the show button already exists to avoid adding it multiple times
+                            /*
                             if (!tweet.querySelector("button")) { // This line checks for an existing button
                                 const showButton = document.createElement("button");
                                 showButton.innerText = "Show";
@@ -75,6 +83,7 @@ async function retrieveAndModifyTweetContents() {
                                 };
                                 tweet.appendChild(showButton); // Add the show button to the tweet
                             }
+                            */
                         } else {
                             // Modify the tweet content color based on the modification result
                             textsDom.forEach(textDom => {
