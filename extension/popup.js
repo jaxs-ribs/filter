@@ -31,12 +31,12 @@ function displayRules(rules) {
     const container = document.getElementById('rules-container');
     container.innerHTML = ''; 
     rules.forEach(rule => {
-        const inputElement = document.createElement('input'); 
-        inputElement.type = 'text'; 
-        inputElement.classList.add('rule');
-        inputElement.value = rule; 
-        inputElement.addEventListener('input', debounceSubmitSettings); 
-        container.appendChild(inputElement);
+        const textareaElement = document.createElement('textarea'); 
+        textareaElement.classList.add('rule');
+        textareaElement.value = rule; 
+        textareaElement.addEventListener('input', debounceSubmitSettings); 
+        textareaElement.addEventListener('input', autoResize, false); // Add this line
+        container.appendChild(textareaElement);
     });
 }
 
@@ -47,12 +47,12 @@ function setToggleState(is_on) {
 
 function addRule() {
     const container = document.getElementById('rules-container');
-    const inputElement = document.createElement('input');
-    inputElement.type = 'text';
-    inputElement.classList.add('rule');
-    inputElement.placeholder = "";
-    inputElement.addEventListener('input', debounceSubmitSettings); 
-    container.appendChild(inputElement);
+    const textareaElement = document.createElement('textarea');
+    textareaElement.classList.add('rule');
+    textareaElement.placeholder = "Enter a rule";
+    textareaElement.addEventListener('input', debounceSubmitSettings); 
+    textareaElement.addEventListener('input', autoResize, false); // Add this line
+    container.appendChild(textareaElement);
 }
 
 function removeRule() {
@@ -91,4 +91,9 @@ function submitSettings() {
             throw new Error('Network response was not ok');
         }
     }).catch(error => console.error('Error submitting settings:', error));
+}
+
+function autoResize() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
 }
