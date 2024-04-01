@@ -4,6 +4,11 @@ use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
 mod llm_inference;
 mod helpers;
 use helpers::default_headers;
+use helpers::extract_tweets;
+
+// TODO: Zen: Remove this
+const PROCESS_ID: &str = "filter:filter:template.os";
+const OPENAI_API: &str = include_str!("../../pkg/.openai_key");
 
 wit_bindgen::generate!({
     path: "wit",
@@ -13,9 +18,7 @@ wit_bindgen::generate!({
     },
 });
 
-const PROCESS_ID: &str = "filter:filter:template.os";
-const OPENAI_API: &str = include_str!("../../pkg/.openai_key");
-
+call_init!(init);
 
 fn handle_http_messages(message: &Message, api: &OpenaiApi)  {
     if let Message::Request { ref body, .. } = message {
@@ -37,7 +40,7 @@ fn handle_request(body: &[u8], api: &OpenaiApi) -> Option<()> {
             let bound_path = http_request.bound_path(Some(PROCESS_ID));
             match bound_path {
                 "/send" => {
-                    send_tweet(&body.bytes, api);
+                    filter_tweets(&body.bytes, api);
                 }
                 _ => {}
             }
@@ -47,25 +50,7 @@ fn handle_request(body: &[u8], api: &OpenaiApi) -> Option<()> {
     None
 }
 
-fn extract_tweets(body: &[u8]) -> anyhow::Result<Vec<String>> {
-    let parsed_body = serde_json::from_slice::<serde_json::Value>(body)?;
-    let tweets_array = parsed_body
-        .get("tweets")
-        .ok_or_else(|| anyhow::anyhow!("'tweets' field is missing"))?
-        .as_array()
-        .ok_or_else(|| anyhow::anyhow!("'tweets' is not an array"))?;
-
-    let tweets = tweets_array
-        .iter()
-        .map(|tweet| {
-            tweet.as_str().ok_or_else(|| anyhow::anyhow!("tweet is not a string")).map(String::from)
-        })
-        .collect::<anyhow::Result<Vec<String>>>()?;
-
-    Ok(tweets)
-}
-
-fn send_tweet(body: &[u8], api: &OpenaiApi) -> Option<()> {
+fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
     let tweets = extract_tweets(body).ok()?;
     let tweet_results = llm_inference::llm_inference(&tweets, api).ok()?;
     // TODO: Zen: Sometimes the llm response doesn't return enough responses for all the tweets. Maybe we need to separate them and number them? 
@@ -82,7 +67,6 @@ fn send_tweet(body: &[u8], api: &OpenaiApi) -> Option<()> {
     None
 }
 
-call_init!(init);
 
 fn setup(our: &Address) -> OpenaiApi {
     println!("filter: begin");
