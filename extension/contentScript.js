@@ -1,6 +1,5 @@
 let globalTweetMap = new Map();
 
-// TODO: Zena: When scrolling back up, the tweet is reloaded, but not in the hashmap anymore. Maybe not important for now though, maybe another time. 
 async function retrieveAndModifyTweetContents() {
     const tweets = document.querySelectorAll("article");
     let newTweets = []; // Array to hold new tweets
@@ -20,6 +19,12 @@ async function retrieveAndModifyTweetContents() {
 
         if (content && !globalTweetMap.has(content)) {
             newTweets.push(content);
+            // Initially mark unprocessed tweets as grey
+            textsDom.forEach(textDom => {
+                if (textDom.tagName.toLowerCase() === "span") {
+                    textDom.style.color = "grey";
+                }
+            });
         }
     }
 
@@ -33,12 +38,10 @@ async function retrieveAndModifyTweetContents() {
                 body: requestBody,
             });
             const data = await response.json();
-            // Assuming 'tweet_results' is an array of booleans corresponding to each tweet
             const tweetResults = data.tweet_results || [];
 
             tweetResults.forEach((result, index) => {
                 const originalText = newTweets[index];
-                // Store the result (true or false) directly in the globalTweetMap
                 globalTweetMap.set(originalText, result);
                 
                 tweets.forEach(tweet => {
@@ -54,13 +57,33 @@ async function retrieveAndModifyTweetContents() {
                     });
 
                     if (tweetContent === originalText) {
-                        // Modify the tweet content color based on the modification result
-                        textsDom.forEach(textDom => {
-                            if (textDom.tagName.toLowerCase() === "span") {
-                                textDom.style.color = result ? "green" : "grey";
+                        if (result === false) {
+                            // Hide the tweet text
+                            textsDom.forEach(textDom => {
+                                textDom.style.display = "none"; // Hide text
+                            });
+                    
+                            // Check if the show button already exists to avoid adding it multiple times
+                            if (!tweet.querySelector("button")) { // This line checks for an existing button
+                                const showButton = document.createElement("button");
+                                showButton.innerText = "Show";
+                                showButton.onclick = function() {
+                                    textsDom.forEach(textDom => {
+                                        textDom.style.display = ""; // Show text
+                                    });
+                                    showButton.remove(); // Remove the button after clicking
+                                };
+                                tweet.appendChild(showButton); // Add the show button to the tweet
                             }
-                            // For images, consider how you want to handle modifications
-                        });
+                        } else {
+                            // Modify the tweet content color based on the modification result
+                            textsDom.forEach(textDom => {
+                                if (textDom.tagName.toLowerCase() === "span") {
+                                    textDom.style.color = "white";
+                                }
+                                // For images, consider how you want to handle modifications
+                            });
+                        }
                     }
                 });
             });
@@ -69,4 +92,4 @@ async function retrieveAndModifyTweetContents() {
         }
     }
 }
-setInterval(retrieveAndModifyTweetContents, 5000); // Check for new tweets every 5 seconds
+setInterval(retrieveAndModifyTweetContents, 1000); // Check for new tweets every second

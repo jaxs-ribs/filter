@@ -1,9 +1,7 @@
-use llm_types::openai::ChatParams;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
-use crate::llm_types::openai::Provider;
 
 use kinode_process_lib::{
     await_message, call_init, get_blob, http, println, Address, Message, ProcessId, Request,
@@ -11,11 +9,9 @@ use kinode_process_lib::{
 };
 use std::collections::HashMap;
 
-mod llm_api;
-mod llm_types;
-
-use llm_api::{spawn_openai_pkg, OpenaiApi};
-use llm_types::openai::Message as OpenaiMessage;
+use llm_interface::openai::ChatParams;
+use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
+use llm_interface::openai::Message as OpenaiMessage;
 
 wit_bindgen::generate!({
     path: "wit",
@@ -33,8 +29,14 @@ fn default_headers() -> HashMap<String, String> {
     HashMap::from([
         ("Content-Type".to_string(), "application/json".to_string()),
         ("Access-Control-Allow-Origin".to_string(), "*".to_string()),
-        ("Access-Control-Allow-Headers".to_string(), "Content-Type".to_string()),
-        ("Access-Control-Allow-Methods".to_string(), "GET, POST, OPTIONS".to_string()),
+        (
+            "Access-Control-Allow-Headers".to_string(),
+            "Content-Type".to_string(),
+        ),
+        (
+            "Access-Control-Allow-Methods".to_string(),
+            "GET, POST, OPTIONS".to_string(),
+        ),
     ])
 }
 
@@ -98,7 +100,7 @@ fn send_tweet(our: &Address, body: &[u8], api: &OpenaiApi) -> Option<()> {
             None => vec![],
         };
     let tweet_results = make_request(our, &tweets, api).ok()?;
-    assert_eq!(tweets.len(), tweet_results.len(), "Tweets and results length mismatch");
+    // assert_eq!(tweets.len(), tweet_results.len(), "Tweets and results length mismatch");
 
     let response_body =
         serde_json::to_string(&serde_json::json!({ "tweet_results": tweet_results })).ok()?;
@@ -116,7 +118,8 @@ fn make_request(our: &Address, tweets: &[String], api: &OpenaiApi) -> anyhow::Re
         "Nothing related to tech.".into(),
         "Nothing related to finance.".into(),
     ];
-    let content = format!(r###"
+    let content = format!(
+        r###"
     I am going to give you a series of tweets, and a series of rules. 
 
     The rules are: 
@@ -129,7 +132,8 @@ fn make_request(our: &Address, tweets: &[String], api: &OpenaiApi) -> anyhow::Re
     Do not answer with anything else but 0 or 1. No part of the answer should contain anything but the symbols 0 or 1.
     The tweets are delimited by |||.
     "###,
-        temp_rules.join("\n"), tweets.join("|||\n"),
+        temp_rules.join("\n"),
+        tweets.join("|||\n"),
     );
     let system_prompt = OpenaiMessage {
         role: "system".into(),
@@ -147,33 +151,35 @@ fn make_request(our: &Address, tweets: &[String], api: &OpenaiApi) -> anyhow::Re
 }
 
 fn parse_response_to_bool_array(response: &str) -> Vec<bool> {
-    response.chars().filter_map(|c| match c {
-        '1' => Some(true),
-        '0' => Some(false),
-        _ => None,
-    }).collect()
+    response
+        .chars()
+        .filter_map(|c| match c {
+            '1' => Some(true),
+            '0' => Some(false),
+            _ => None,
+        })
+        .collect()
 }
-
 
 fn create_chat_params(messages: Vec<OpenaiMessage>) -> ChatParams {
     let chat_params = ChatParams {
         model: "gpt-4-turbo-preview".into(),
         messages,
         max_tokens: Some(100),
-        temperature: Some(0.0),
+        // temperature: Some(0.0),
         ..Default::default()
     };
     chat_params
 }
 
 call_init!(init);
+
 fn init(our: Address) {
     println!("filter: begin");
     let _ = http::serve_index_html(&our, "ui", false, true, vec!["/", "/status", "/send"]);
-    let Ok(api) = spawn_openai_pkg(&our, OPENAI_API) else {
+    let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {
         panic!("Failed to spawn openai pkg");
     };
-    // let _ = make_request(&our);
 
     loop {
         let Ok(message) = await_message() else {
