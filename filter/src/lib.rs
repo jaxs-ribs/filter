@@ -9,6 +9,7 @@ use helpers::extract_tweets;
 
 mod structs;
 use structs::State;
+use structs::Settings;
 
 // TODO: Zen: Remove this
 const PROCESS_ID: &str = "filter:filter:template.os";
@@ -49,11 +50,24 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
                 "/fetch_settings" => {
                     fetch_settings(state);
                 }
+                "/submit_settings" => {
+                    submit_settings(&body.bytes, api, state);
+                }
                 _ => {}
             }
         }
         _ => {}
     }
+    None
+}
+
+fn submit_settings(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
+    println!("Submit settings triggerd");
+    let settings = serde_json::from_slice::<Settings>(body).ok()?;
+    state.rules = settings.rules;
+    state.is_on = settings.is_on;
+    state.save();
+    println!("State is now {:?}", state);
     None
 }
 
@@ -92,7 +106,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
 
 fn setup(our: &Address) -> OpenaiApi {
     println!("filter: begin");
-    if let Err(e) = http::serve_index_html(&our, "ui", false, true, vec!["/", "/send", "/fetch_settings"]) {
+    if let Err(e) = http::serve_index_html(&our, "ui", false, true, vec!["/", "/send", "/fetch_settings", "/submit_settings"]) {
         panic!("Error serving index html: {:?}", e);
     }
     let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {

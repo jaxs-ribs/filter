@@ -34,3 +34,10 @@ impl State {
         set_state(&serialized_state);
     }
 }
+
+// TODO: Zen: We are making this another struct in case state gets expanded. If it isn't, just merge
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Settings {
+    pub rules: Vec<String>,
+    pub is_on: bool,
+}
