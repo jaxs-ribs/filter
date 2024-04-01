@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     fetchSettings();
+    document.getElementById('add-rule').addEventListener('click', addRule);
 });
 
 function fetchSettings() {
@@ -23,14 +24,24 @@ function displayRules(rules) {
     const container = document.getElementById('rules-container');
     container.innerHTML = ''; 
     rules.forEach(rule => {
-        const ruleElement = document.createElement('div');
-        ruleElement.classList.add('rule');
-        ruleElement.textContent = rule;
-        container.appendChild(ruleElement);
+        const inputElement = document.createElement('input'); // Changed from 'div' to 'input'
+        inputElement.type = 'text'; // Specify that it's a text input
+        inputElement.classList.add('rule');
+        inputElement.value = rule; // Use value for input elements
+        container.appendChild(inputElement);
     });
 }
 
 function setToggleState(is_on) {
     const toggle = document.getElementById('toggle');
     toggle.checked = is_on;
+}
+
+function addRule() {
+    const container = document.getElementById('rules-container');
+    const inputElement = document.createElement('input');
+    inputElement.type = 'text';
+    inputElement.classList.add('rule');
+    inputElement.placeholder = "";
+    container.appendChild(inputElement);
 }
