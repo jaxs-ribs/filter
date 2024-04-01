@@ -2,9 +2,13 @@ use kinode_process_lib::{await_message, call_init, get_blob, http, println, Addr
 use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
 
 mod llm_inference;
+
 mod helpers;
 use helpers::default_headers;
 use helpers::extract_tweets;
+
+mod structs;
+use structs::State;
 
 // TODO: Zen: Remove this
 const PROCESS_ID: &str = "filter:filter:template.os";
@@ -20,13 +24,13 @@ wit_bindgen::generate!({
 
 call_init!(init);
 
-fn handle_http_messages(message: &Message, api: &OpenaiApi)  {
+fn handle_http_messages(message: &Message, api: &OpenaiApi, state: &mut State)  {
     if let Message::Request { ref body, .. } = message {
-        handle_request(body, api);
+        handle_request(body, api, state);
     }
 }
 
-fn handle_request(body: &[u8], api: &OpenaiApi) -> Option<()> {
+fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
     let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
     let http_request = server_request.request()?;
     match http_request.method().ok() {
@@ -42,12 +46,30 @@ fn handle_request(body: &[u8], api: &OpenaiApi) -> Option<()> {
                 "/send" => {
                     filter_tweets(&body.bytes, api);
                 }
+                "/fetch_settings" => {
+                    fetch_settings(state);
+                }
                 _ => {}
             }
         }
         _ => {}
     }
     None
+}
+
+fn fetch_settings(state: &mut State) -> Option<()> {
+    println!("Found fetch settings");
+    let response_body = serde_json::to_string(&serde_json::json!({
+        "rules": state.rules,
+        "is_on": state.is_on
+    })).ok()?;
+
+    let _ = http::send_response(
+        http::StatusCode::OK,
+        Some(default_headers()),
+        response_body.as_bytes().to_vec(),
+    );
+    Some(())
 }
 
 fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
@@ -70,7 +92,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi) -> Option<()> {
 
 fn setup(our: &Address) -> OpenaiApi {
     println!("filter: begin");
-    if let Err(e) = http::serve_index_html(&our, "ui", false, true, vec!["/", "/send"]) {
+    if let Err(e) = http::serve_index_html(&our, "ui", false, true, vec!["/", "/send", "/fetch_settings"]) {
         panic!("Error serving index html: {:?}", e);
     }
     let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {
@@ -81,6 +103,7 @@ fn setup(our: &Address) -> OpenaiApi {
 
 fn init(our: Address) {
     let api = setup(&our);
+    let mut state = State::fetch();
 
     while let Ok(message) = await_message() {
         if message.source().node != our.node {
@@ -88,7 +111,8 @@ fn init(our: Address) {
         }
 
         if message.source().process == "http_server:distro:sys" {
-            handle_http_messages(&message, &api);
+            handle_http_messages(&message, &api, &mut state);
+            state.save();
         } 
     }
 }
