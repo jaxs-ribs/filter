@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use kinode_process_lib::{get_state, set_state};
 
@@ -5,6 +7,7 @@ use kinode_process_lib::{get_state, set_state};
 pub struct State {
     pub rules: Vec<String>,
     pub is_on: bool,
+    pub filtered_tweets: HashMap<String, bool>,
 }
 
 impl State {
@@ -16,6 +19,7 @@ impl State {
                 "This is a test 3".to_string(),
             ],
             is_on: true,
+            filtered_tweets: HashMap::new(),
         }
     }
 }
