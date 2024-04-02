@@ -50,7 +50,6 @@ function insertLearnButton(tweet) {
     }
 }
 
-// TODO: Zen: Gray it out if not in global map
 function greyOutTweet(textsDom) {
     textsDom.forEach(textDom => {
         if (textDom.tagName.toLowerCase() === "span") {
