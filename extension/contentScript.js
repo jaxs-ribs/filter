@@ -121,4 +121,4 @@ async function retrieveAndModifyTweetContents() {
         }
     }
 }
-setInterval(retrieveAndModifyTweetContents, 5000); // Check for new tweets every second
+setInterval(retrieveAndModifyTweetContents, 5000); 
