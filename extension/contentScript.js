@@ -1,6 +1,9 @@
 let globalTweetMap = new Map();
 let globalTweetFilterMap = new Map();
 
+const debug = true;
+
+
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
     let tweetId = null;
@@ -63,7 +66,7 @@ async function filterTweets() {
         .filter(([tweetId]) => !globalTweetFilterMap.has(tweetId))
         .map(([tweetId, content]) => ({ tweetId, content }));
     try {
-        const requestBody = JSON.stringify({ tweets: tweetsData });
+        const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug });
         const response = await fetch('http://localhost:8080/filter:filter:template.os/filter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -116,7 +119,7 @@ async function retrieveAndModifyTweetContents() {
             });
         } else {
             textsDom.forEach(textDom => {
-                textDom.style.display = "none"; 
+                textDom.style.display = "none";
             });
         }
     }

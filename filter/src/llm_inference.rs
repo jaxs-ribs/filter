@@ -8,6 +8,7 @@ pub fn llm_inference(
     rules: &Vec<String>,
     api: &OpenaiApi,
 ) -> anyhow::Result<Vec<bool>> {
+    println!("Llm inference was called.");
     let joined_tweets = tweets
         .iter()
         .enumerate()

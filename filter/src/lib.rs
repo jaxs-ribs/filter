@@ -6,7 +6,6 @@ mod llm_inference;
 
 mod helpers;
 use helpers::default_headers;
-use helpers::extract_tweets;
 
 mod structs;
 use structs::Settings;
@@ -68,6 +67,7 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
 fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
     let tweets_data: Value = serde_json::from_slice(body).ok()?;
     let tweets_array = tweets_data["tweets"].as_array()?;
+    let debug = tweets_data["debug"].as_bool().unwrap_or(true);
     let tweet_ids: Vec<String> = tweets_array
         .iter()
         .filter_map(|tweet| tweet["tweetId"].as_str())
@@ -80,7 +80,9 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         .map(|content| content.to_string())
         .collect();
 
-    let should_pass_vec = if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
+    let should_pass_vec = if debug {
+        tweet_contents.iter().map(|_| rand::random()).collect()
+    } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
         llm_inference::llm_inference(&tweet_contents, &state.rules, api).ok()?
     } else {
         vec![true; tweet_contents.len()]

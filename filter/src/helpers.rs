@@ -15,21 +15,3 @@ pub fn default_headers() -> HashMap<String, String> {
         ),
     ])
 }
-
-pub fn extract_tweets(body: &[u8]) -> anyhow::Result<Vec<String>> {
-    let parsed_body = serde_json::from_slice::<serde_json::Value>(body)?;
-    let tweets_array = parsed_body
-        .get("tweets")
-        .ok_or_else(|| anyhow::anyhow!("'tweets' field is missing"))?
-        .as_array()
-        .ok_or_else(|| anyhow::anyhow!("'tweets' is not an array"))?;
-
-    let tweets = tweets_array
-        .iter()
-        .map(|tweet| {
-            tweet.as_str().ok_or_else(|| anyhow::anyhow!("tweet is not a string")).map(String::from)
-        })
-        .collect::<anyhow::Result<Vec<String>>>()?;
-
-    Ok(tweets)
-}
