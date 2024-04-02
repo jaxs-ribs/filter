@@ -70,7 +70,7 @@ async function filterTweets() {
             body: requestBody,
         });
         const data = await response.json();
-        const filteredTweetResults = data.tweets || [];
+        const filteredTweetResults = data || [];
         console.log(`Filtered Tweets: ${JSON.stringify(filteredTweetResults)}`);
 
         filteredTweetResults.forEach(({ tweetId, filterBool }) => {
@@ -121,4 +121,4 @@ async function retrieveAndModifyTweetContents() {
         }
     }
 }
-setInterval(retrieveAndModifyTweetContents, 1000); // Check for new tweets every second
+setInterval(retrieveAndModifyTweetContents, 5000); // Check for new tweets every second

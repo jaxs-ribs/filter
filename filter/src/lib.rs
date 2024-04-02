@@ -80,7 +80,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         .map(|content| content.to_string())
         .collect();
 
-    let should_pass_vec = if state.is_on {
+    let should_pass_vec = if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
         llm_inference::llm_inference(&tweet_contents, &state.rules, api).ok()?
     } else {
         vec![true; tweet_contents.len()]

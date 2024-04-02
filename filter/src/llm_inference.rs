@@ -42,7 +42,7 @@ Do not answer with anything else but 0 or 1. No part of the answer should contai
         tweets.len(),
         tweets.len() 
     );
-    println!("Content: {}", content);
+    // println!("Content: {}", content);
     let system_prompt = OpenaiMessage {
         role: "system".into(),
         content: "You are a helpful assistant that will only answer with 0 or 1".into(),
@@ -53,7 +53,7 @@ Do not answer with anything else but 0 or 1. No part of the answer should contai
     };
     let chat_params = create_chat_params(vec![system_prompt, test_prompt]);
     let result = OpenaiApi::chat(&api, chat_params)?.content;
-    println!("Openai result: {:?}", result);
+    // println!("Openai result: {:?}", result);
     let bools = parse_response_to_bool_array(&result);
     Ok(bools)
 }
