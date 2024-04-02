@@ -60,7 +60,9 @@ function greyOutTweet(textsDom) {
 }
 
 async function filterTweets() {
-    const tweetsData = Array.from(globalTweetMap, ([tweetId, content]) => ({ tweetId, content }));
+    const tweetsData = Array.from(globalTweetMap)
+        .filter(([tweetId]) => !globalTweetFilterMap.has(tweetId))
+        .map(([tweetId, content]) => ({ tweetId, content }));
     try {
         const requestBody = JSON.stringify({ tweets: tweetsData });
         const response = await fetch('http://localhost:8080/filter:filter:template.os/filter', {
@@ -100,7 +102,6 @@ async function retrieveAndModifyTweetContents() {
         insertLearnButton(tweet);
     }
 
-    // We should probably only send the tweets that are not in globalTweetFilterMap
     await filterTweets();
 
     for (const tweet of tweets) {
