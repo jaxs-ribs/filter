@@ -97,11 +97,11 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
 
     let mut tweet_results = Vec::new();
     for (tweet_id, should_pass) in tweet_ids.into_iter().zip(should_pass_vec) {
-        state
-            .filtered_tweets
-            .entry(&tweet_id)
-            .and_modify(|x| *x = should_pass)
-            .or_insert(should_pass);
+        // state // TODO: Zen: Later
+        //     .filtered_tweets
+        //     .entry(&tweet_id)
+        //     .and_modify(|x| *x = should_pass)
+        //     .or_insert(should_pass);
 
         tweet_results.push(serde_json::json!({
             "tweetId": tweet_id,
