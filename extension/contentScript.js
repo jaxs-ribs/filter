@@ -40,7 +40,14 @@ function insertLearnButton(tweet) {
         cloneBookmarkButton.removeAttribute('data-testid');
         cloneBookmarkButton.setAttribute('data-testid', 'learnbutton');
         cloneBookmarkButton.addEventListener('click', function (event) {
+            event.stopPropagation(); // Prevent the event from bubbling up to parent elements
             console.log('Cloned bookmark button clicked');
+            const tweetId = extractTweetId(tweet);
+            if (globalTweetFilterMap.has(tweetId)) {
+                const currentValue = globalTweetFilterMap.get(tweetId);
+                globalTweetFilterMap.set(tweetId, !currentValue);
+                console.log(`Toggled filter for Tweet ID: ${tweetId} to ${!currentValue}`);
+            }
 
         });
         const svgElement = cloneBookmarkButton.querySelector('svg');
@@ -104,7 +111,9 @@ async function updateVisuals() {
                 textsDom.forEach(textDom => {
                     if (textDom.tagName.toLowerCase() === "span") {
                         textDom.style.color = "white";
+                        textDom.style.display = ""; // Reset display to default
                     }
+                    
                 });
             } else {
                 textsDom.forEach(textDom => {
