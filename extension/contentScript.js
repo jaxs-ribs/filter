@@ -1,7 +1,7 @@
 let globalTweetMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = true;
+const debug = false;
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -29,7 +29,7 @@ function getContent(textsDom) {
 
 function insertLearnButton(tweet) {
     // Check the number of bookmark buttons and duplicate if there is exactly one
-    const bookmarkButtons = tweet.querySelectorAll('[data-testid="bookmark"]');
+    const bookmarkButtons = tweet.querySelectorAll('[data-testid="bookmark"], [data-testid="removeBookmark"]');
     const clonedButtons = tweet.querySelectorAll('[data-testid="learnbutton"]');
     if (clonedButtons.length === 0 && bookmarkButtons.length > 0) {
         const bookmarkButton = bookmarkButtons[0];
@@ -51,7 +51,7 @@ function insertLearnButton(tweet) {
             const newPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13h-3v3h-4v-3H7v-4h3V8h4v3h3v4z";
             svgElement.querySelector('path').setAttribute('d', newPath);
         }
-        bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton.nextSibling);
+        bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton);
     }
 }
 
@@ -97,9 +97,9 @@ async function updateVisuals() {
     for (const tweet of tweets) {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
         let tweetId = extractTweetId(tweet);
+        insertLearnButton(tweet);
         if (!globalTweetMap.has(tweetId)) {
             greyOutTweet(textsDom);
-            insertLearnButton(tweet);
         } else {
             let should_pass = globalTweetFilterMap.get(tweetId);
             if (should_pass) {
@@ -141,5 +141,5 @@ async function parseState() {
 console.log("Content script loaded, LFG!");
 parseState();
 setInterval(updateVisuals, 100);
-setInterval(parseState, 5000);
+setInterval(parseState, 500);
 
