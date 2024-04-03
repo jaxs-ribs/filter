@@ -34,7 +34,7 @@ function insertLearnButton(tweet) {
     // Check the number of bookmark buttons and duplicate if there is exactly one
     const bookmarkButtons = tweet.querySelectorAll('[data-testid="bookmark"]');
     const clonedButtons = tweet.querySelectorAll('[data-testid="learnbutton"]');
-    if (clonedButtons.length === 0) {
+    if (clonedButtons.length === 0 && bookmarkButtons.length > 0) {
         const bookmarkButton = bookmarkButtons[0];
         const cloneBookmarkButton = bookmarkButton.cloneNode(true);
         cloneBookmarkButton.removeAttribute('data-testid');
