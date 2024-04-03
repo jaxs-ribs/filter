@@ -36,6 +36,7 @@ function insertLearnButton(tweet) {
         const cloneBookmarkButton = bookmarkButton.cloneNode(true);
         cloneBookmarkButton.removeAttribute('data-testid');
         cloneBookmarkButton.setAttribute('data-testid', 'learnbutton');
+        cloneBookmarkButton.style.padding = "0 10px"; // Adjust padding as needed
         cloneBookmarkButton.addEventListener('click', function (event) {
             event.stopPropagation(); // Prevent the event from bubbling up to parent elements
             const tweetId = extractTweetId(tweet);
@@ -50,7 +51,7 @@ function insertLearnButton(tweet) {
             const newPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13h-3v3h-4v-3H7v-4h3V8h4v3h3v4z";
             svgElement.querySelector('path').setAttribute('d', newPath);
         }
-        bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton);
+        bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton.nextSibling);
     }
 }
 
