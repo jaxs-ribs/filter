@@ -138,7 +138,7 @@ async function parseState() {
 }
 
 console.log("Content script loaded, LFG!");
-setInterval(updateVisuals, 100);
 parseState();
+setInterval(updateVisuals, 100);
 setInterval(parseState, 5000);
 
