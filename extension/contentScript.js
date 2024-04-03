@@ -10,9 +10,6 @@ function extractTweetId(tweet) {
         const href = linkElement.getAttribute('href');
         const statusPosition = href.indexOf('/status/') + 8; // +8 to move past '/status/'
         tweetId = href.substring(statusPosition);
-        console.log("Tweet ID:", tweetId);
-    } else {
-        console.log("No link element found");
     }
     return tweetId;
 }
@@ -41,12 +38,10 @@ function insertLearnButton(tweet) {
         cloneBookmarkButton.setAttribute('data-testid', 'learnbutton');
         cloneBookmarkButton.addEventListener('click', function (event) {
             event.stopPropagation(); // Prevent the event from bubbling up to parent elements
-            console.log('Cloned bookmark button clicked');
             const tweetId = extractTweetId(tweet);
             if (globalTweetFilterMap.has(tweetId)) {
                 const currentValue = globalTweetFilterMap.get(tweetId);
                 globalTweetFilterMap.set(tweetId, !currentValue);
-                console.log(`Toggled filter for Tweet ID: ${tweetId} to ${!currentValue}`);
             }
 
         });
@@ -80,7 +75,6 @@ async function filterTweets() {
         });
         const data = await response.json();
         const filteredTweetResults = data || [];
-        console.log(`Filtered Tweets: ${JSON.stringify(filteredTweetResults)}`);
 
         filteredTweetResults.forEach(({ tweetId, filterBool }) => {
             globalTweetFilterMap.set(tweetId, filterBool);
@@ -143,6 +137,8 @@ async function parseState() {
     await filterTweets();
 }
 
+console.log("Content script loaded, LFG!");
 setInterval(updateVisuals, 100);
+parseState();
 setInterval(parseState, 5000);
 
