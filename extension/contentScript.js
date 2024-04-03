@@ -85,7 +85,7 @@ async function filterTweets() {
 }
 
 
-async function retrieveAndModifyTweetContents() {
+async function main() {
     const tweets = document.querySelectorAll("article");
 
     for (const tweet of tweets) {
@@ -124,4 +124,4 @@ async function retrieveAndModifyTweetContents() {
         }
     }
 }
-setInterval(retrieveAndModifyTweetContents, 5000); 
+setInterval(main, 5000); 
