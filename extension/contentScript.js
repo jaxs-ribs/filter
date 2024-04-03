@@ -3,7 +3,6 @@ let globalTweetFilterMap = new Map();
 
 const debug = true;
 
-
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
     let tweetId = null;
@@ -84,10 +83,40 @@ async function filterTweets() {
     }
 }
 
-
-async function main() {
+/*
+Iterates through tweets: 
+- Inserts a 'learn' button if not already present.
+- Greys out unprocessed tweets.
+- Sets processed tweets' text color to white if they pass the language model filter.
+- Hides tweets that do not pass the filter.
+*/
+async function updateVisuals() {
     const tweets = document.querySelectorAll("article");
+    for (const tweet of tweets) {
+        const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
+        let tweetId = extractTweetId(tweet);
+        if (!globalTweetMap.has(tweetId)) {
+            greyOutTweet(textsDom);
+            insertLearnButton(tweet);
+        } else {
+            let should_pass = globalTweetFilterMap.get(tweetId);
+            if (should_pass) {
+                textsDom.forEach(textDom => {
+                    if (textDom.tagName.toLowerCase() === "span") {
+                        textDom.style.color = "white";
+                    }
+                });
+            } else {
+                textsDom.forEach(textDom => {
+                    textDom.style.display = "none";
+                });
+            }
+        }
+    }
+}
 
+function populateGlobalTweetMap() {
+    const tweets = document.querySelectorAll("article");
     for (const tweet of tweets) {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
 
@@ -96,32 +125,15 @@ async function main() {
 
         if (tweetId && content) {
             globalTweetMap.set(tweetId, content);
-            if (!globalTweetFilterMap.has(tweetId)) {
-                greyOutTweet(textsDom);
-            }
-        }
-
-        insertLearnButton(tweet);
-    }
-
-    await filterTweets();
-
-    for (const tweet of tweets) {
-        const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
-        let tweetId = extractTweetId(tweet);
-
-        let should_pass = globalTweetFilterMap.get(tweetId);
-        if (should_pass) {
-            textsDom.forEach(textDom => {
-                if (textDom.tagName.toLowerCase() === "span") {
-                    textDom.style.color = "white";
-                }
-            });
-        } else {
-            textsDom.forEach(textDom => {
-                textDom.style.display = "none";
-            });
         }
     }
 }
-setInterval(main, 5000); 
+
+async function parseState() {
+    populateGlobalTweetMap();
+    await filterTweets();
+}
+
+setInterval(updateVisuals, 100);
+setInterval(parseState, 5000);
+
