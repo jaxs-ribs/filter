@@ -1,7 +1,7 @@
 let globalTweetMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = false;
+const debug = true;
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -27,6 +27,15 @@ function getContent(textsDom) {
     return content;
 }
 
+function toggleVisibility(tweet, event) {
+    event.stopPropagation(); // Prevent the event from bubbling up to parent elements
+    const tweetId = extractTweetId(tweet);
+    if (globalTweetFilterMap.has(tweetId)) {
+        const currentValue = globalTweetFilterMap.get(tweetId);
+        globalTweetFilterMap.set(tweetId, !currentValue);
+    }
+}
+
 function insertLearnButton(tweet) {
     // Check the number of bookmark buttons and duplicate if there is exactly one
     const bookmarkButtons = tweet.querySelectorAll('[data-testid="bookmark"], [data-testid="removeBookmark"]');
@@ -38,13 +47,13 @@ function insertLearnButton(tweet) {
         cloneBookmarkButton.setAttribute('data-testid', 'learnbutton');
         cloneBookmarkButton.style.padding = "0 10px"; // Adjust padding as needed
         cloneBookmarkButton.addEventListener('click', function (event) {
-            event.stopPropagation(); // Prevent the event from bubbling up to parent elements
-            const tweetId = extractTweetId(tweet);
-            if (globalTweetFilterMap.has(tweetId)) {
-                const currentValue = globalTweetFilterMap.get(tweetId);
-                globalTweetFilterMap.set(tweetId, !currentValue);
-            }
-
+            toggleVisibility(tweet, event);
+            // event.stopPropagation(); // Prevent the event from bubbling up to parent elements
+            // const tweetId = extractTweetId(tweet);
+            // if (globalTweetFilterMap.has(tweetId)) {
+            //     const currentValue = globalTweetFilterMap.get(tweetId);
+            //     globalTweetFilterMap.set(tweetId, !currentValue);
+            // }
         });
         const svgElement = cloneBookmarkButton.querySelector('svg');
         if (svgElement) {
@@ -85,15 +94,8 @@ async function filterTweets() {
     }
 }
 
-/*
-Iterates through tweets: 
-- Inserts a 'learn' button if not already present.
-- Greys out unprocessed tweets.
-- Sets processed tweets' text color to white if they pass the language model filter.
-- Hides tweets that do not pass the filter.
-*/
 async function updateVisuals() {
-    const tweets = document.querySelectorAll("article");
+    const tweets = document.querySelectorAll("[data-testid=cellInnerDiv] > *");
     for (const tweet of tweets) {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
         let tweetId = extractTweetId(tweet);
@@ -103,17 +105,26 @@ async function updateVisuals() {
         } else {
             let should_pass = globalTweetFilterMap.get(tweetId);
             if (should_pass) {
+                if (tweet.firstChild) {
+                    tweet.firstChild.style.display = ""; 
+                    tweet.style.height = ""; 
+                    tweet.style.cursor = "default"; 
+                    tweet.onclick = null; 
+                }
                 textsDom.forEach(textDom => {
                     if (textDom.tagName.toLowerCase() === "span") {
                         textDom.style.color = "white";
-                        textDom.style.display = ""; // Reset display to default
                     }
-                    
                 });
             } else {
-                textsDom.forEach(textDom => {
-                    textDom.style.display = "none";
-                });
+                if (tweet.firstChild) {
+                    tweet.firstChild.style.display = "none"; 
+                    tweet.style.height = "5vh"; 
+                    tweet.style.cursor = "pointer"; // Change cursor to pointer
+                    tweet.onclick = function(event) {
+                        toggleVisibility(tweet, event);
+                    }
+                }
             }
         }
     }
