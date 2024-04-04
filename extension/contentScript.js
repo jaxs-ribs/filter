@@ -130,26 +130,6 @@ async function updateVisuals() {
     }
 }
 
-// function addCustomStyles() {
-//     const styleElement = document.createElement('style');
-//     document.head.appendChild(styleElement);
-//     const styleSheet = styleElement.sheet;
-
-//     styleSheet.insertRule(`
-//         .tweet-hidden-content {
-//             cursor: pointer;
-//             height: 5vh;
-//             background-color: #f0f0f0; /* Slightly grey background */
-//         }
-//     `, 0);
-
-//     styleSheet.insertRule(`
-//         .tweet-hidden-content:hover {
-//             background-color: #e0e0e0; /* Slightly darker grey on hover */
-//         }
-//     `, 1);
-// }
-
 function populateGlobalTweetMap() {
     const tweets = document.querySelectorAll("article");
     for (const tweet of tweets) {
