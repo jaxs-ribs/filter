@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.twitter.com/*"],
-      "js": ["contentScript.js"],
+      "js": ["dist/bundle.js"], 
       "run_at": "document_end"
     }
   ]

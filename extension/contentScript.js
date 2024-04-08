@@ -1,7 +1,18 @@
+import Tesseract from 'tesseract.js';
+
 let globalTweetMap = new Map();
 let globalTweetFilterMap = new Map();
 
 const debug = true;
+
+async function recognizeImageText(imageUrl) {
+    try {
+        const { data: { text } } = await Tesseract.recognize(imageUrl, 'eng');
+        console.log(text); // Process or log the recognized text
+    } catch (error) {
+        console.error('OCR failed', error);
+    }
+}
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -106,10 +117,10 @@ async function updateVisuals() {
             let should_pass = globalTweetFilterMap.get(tweetId);
             if (should_pass) {
                 if (tweet.firstChild) {
-                    tweet.firstChild.style.display = ""; 
-                    tweet.style.height = ""; 
-                    tweet.style.cursor = "default"; 
-                    tweet.onclick = null; 
+                    tweet.firstChild.style.display = "";
+                    tweet.style.height = "";
+                    tweet.style.cursor = "default";
+                    tweet.onclick = null;
                 }
                 textsDom.forEach(textDom => {
                     if (textDom.tagName.toLowerCase() === "span") {
@@ -118,10 +129,10 @@ async function updateVisuals() {
                 });
             } else {
                 if (tweet.firstChild) {
-                    tweet.firstChild.style.display = "none"; 
-                    tweet.style.height = "5vh"; 
+                    tweet.firstChild.style.display = "none";
+                    tweet.style.height = "5vh";
                     tweet.style.cursor = "pointer"; // Change cursor to pointer
-                    tweet.onclick = function(event) {
+                    tweet.onclick = function (event) {
                         toggleVisibility(tweet, event);
                     }
                 }
@@ -149,8 +160,9 @@ async function parseState() {
     await filterTweets();
 }
 
+recognizeImageText("https://www.shutterstock.com/shutterstock/photos/1260319420/display_1500/stock-vector-vector-illustration-of-quote-the-only-true-wisdom-is-in-knowing-you-know-nothing-socrates-1260319420.jpg")
 console.log("Content script loaded, LFG!");
-parseState();
-setInterval(updateVisuals, 100);
-setInterval(parseState, 500);
+// parseState();
+// setInterval(updateVisuals, 100);
+// setInterval(parseState, 500);
 
