@@ -74,7 +74,6 @@ fn create_chat_params(messages: Vec<ChatImageMessage>) -> ChatImageParams {
         model: "gpt-4-turbo".into(),
         messages,
         max_tokens: Some(40),
-        // temperature: Some(0.0),
         ..Default::default()
     };
     chat_params
