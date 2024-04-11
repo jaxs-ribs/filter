@@ -90,6 +90,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
     }
 
     let should_pass_vec = if debug {
+        println!("Tweet contents: {:?}", tweet_contents.len());
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
         llm_inference::llm_inference(&tweet_contents, &photo_urls, &state.rules, api).ok()?

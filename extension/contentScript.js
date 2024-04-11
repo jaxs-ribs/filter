@@ -2,7 +2,10 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = true;
+const debug = false;
+
+// Used to prevent duplicate requests
+let isFilteringTweets = false; 
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -116,6 +119,10 @@ async function updateVisuals() {
 }
 
 async function filterTweets() {
+    if (isFilteringTweets) {
+        return; 
+    }
+    isFilteringTweets = true;
     const tweetsData = Array.from(globalTweetMap)
         .filter(([tweetId]) => !globalTweetFilterMap.has(tweetId))
         .map(([tweetId, content]) => {
@@ -138,6 +145,8 @@ async function filterTweets() {
         });
     } catch (error) {
         console.error("Failed to filter tweets:", error);
+    } finally {
+        isFilteringTweets = false;
     }
 }
 

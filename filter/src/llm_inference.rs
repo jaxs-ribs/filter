@@ -56,7 +56,7 @@ fn system_prompt_text(tweet_count: usize, rules_string: &str) -> String {
 You are a helpful assistant that will only answer with 0 or 1.
 Each message of the user will represent a tweet, and possibly an image. 
 For each of the tweets, respond 0 if the content within the text or image breaks one or more rules, and 1 if no rules are broken. 
-Do not answer with anything else but 0 or 1. No part of the answer should contain anything but the symbols 0 or 1. There are a total of {} tweets, meaning your answer should be {} digits long. 
+Do not answer with anything else but 0 or 1. No part of the answer should contain anything but the symbols 0 or 1. There are a total of {} tweets, meaning your answer should be {} digits long. It can't be any longer or shorter than that. 
 The rules are: 
 {}
 "###,
