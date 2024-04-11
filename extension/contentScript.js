@@ -1,4 +1,5 @@
 let globalTweetMap = new Map();
+let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
 const debug = true;
@@ -12,6 +13,18 @@ function extractTweetId(tweet) {
         tweetId = href.substring(statusPosition);
     }
     return tweetId;
+}
+
+function extractTweetPhotoUrl(tweet) {
+    const photoDiv = tweet.querySelector('[data-testid="tweetPhoto"]');
+    let photoUrl = null;
+    if (photoDiv) {
+        const imgTag = photoDiv.querySelector('img');
+        if (imgTag) {
+            photoUrl = imgTag.getAttribute('src');
+        }
+    }
+    return photoUrl;
 }
 
 function getContent(textsDom) {
@@ -72,28 +85,6 @@ function greyOutTweet(textsDom) {
     });
 }
 
-async function filterTweets() {
-    const tweetsData = Array.from(globalTweetMap)
-        .filter(([tweetId]) => !globalTweetFilterMap.has(tweetId))
-        .map(([tweetId, content]) => ({ tweetId, content }));
-    try {
-        const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug });
-        const response = await fetch('http://localhost:8080/filter:filter:template.os/filter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: requestBody,
-        });
-        const data = await response.json();
-        const filteredTweetResults = data || [];
-
-        filteredTweetResults.forEach(({ tweetId, filterBool }) => {
-            globalTweetFilterMap.set(tweetId, filterBool);
-        });
-    } catch (error) {
-        console.error("Failed to filter tweets:", error);
-    }
-}
-
 async function updateVisuals() {
     const tweets = document.querySelectorAll("[data-testid=cellInnerDiv] > *");
     for (const tweet of tweets) {
@@ -130,6 +121,32 @@ async function updateVisuals() {
     }
 }
 
+async function filterTweets() {
+    const tweetsData = Array.from(globalTweetMap)
+        .filter(([tweetId]) => !globalTweetFilterMap.has(tweetId))
+        .map(([tweetId, content]) => {
+            const photoUrl = globalTweetImageMap.has(tweetId) ? globalTweetImageMap.get(tweetId) : null;
+            return { tweetId, content, photoUrl };
+        });
+    try {
+        const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug });
+        console.log(requestBody);
+        const response = await fetch('http://localhost:8080/filter:filter:template.os/filter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+        });
+        const data = await response.json();
+        const filteredTweetResults = data || [];
+
+        filteredTweetResults.forEach(({ tweetId, filterBool }) => {
+            globalTweetFilterMap.set(tweetId, filterBool);
+        });
+    } catch (error) {
+        console.error("Failed to filter tweets:", error);
+    }
+}
+
 function populateGlobalTweetMap() {
     const tweets = document.querySelectorAll("article");
     for (const tweet of tweets) {
@@ -137,9 +154,13 @@ function populateGlobalTweetMap() {
 
         let tweetId = extractTweetId(tweet);
         let content = getContent(textsDom);
+        let photo = extractTweetPhotoUrl(tweet);
 
         if (tweetId && content) {
             globalTweetMap.set(tweetId, content);
+            if (photo) {
+                globalTweetImageMap.set(tweetId, photo);
+            }
         }
     }
 }
@@ -149,7 +170,6 @@ async function parseState() {
     await filterTweets();
 }
 
-console.log("Content script loaded, LFG!");
 parseState();
 setInterval(updateVisuals, 100);
 setInterval(parseState, 500);

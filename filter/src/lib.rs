@@ -47,9 +47,6 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
                 "/filter" => {
                     filter_tweets(&body.bytes, api, state);
                 }
-                // "/send" => {
-                //     filter_tweets(&body.bytes, api, state);
-                // }
                 "/fetch_settings" => {
                     fetch_settings(state);
                 }
@@ -68,22 +65,25 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
     let tweets_data: Value = serde_json::from_slice(body).ok()?;
     let tweets_array = tweets_data["tweets"].as_array()?;
     let debug = tweets_data["debug"].as_bool().unwrap_or(true);
+
     let tweet_ids: Vec<String> = tweets_array
         .iter()
         .filter_map(|tweet| tweet["tweetId"].as_str())
         .map(|id| id.to_string())
         .collect();
-
     let tweet_contents: Vec<String> = tweets_array
         .iter()
-        .filter_map(|tweet| tweet["content"].as_str())
-        .map(|content| content.to_string())
+        .filter_map(|tweet| tweet["content"].as_str().map(|content| content.to_string()))
+        .collect();
+    let photo_urls: Vec<Option<String>> = tweets_array
+        .iter()
+        .map(|tweet| tweet["photoUrl"].as_str().map(|url| url.to_string()))
         .collect();
 
     let should_pass_vec = if debug {
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
-        llm_inference::llm_inference(&tweet_contents, &state.rules, api).ok()?
+        llm_inference::llm_inference(&tweet_contents, &photo_urls, &state.rules, api).ok()?
     } else {
         vec![true; tweet_contents.len()]
     };
@@ -112,7 +112,9 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
     }
 
     let response_body = serde_json::to_string(&tweet_results).ok()?;
-    println!("Response body is: {}", response_body);
+    if tweet_results.len() > 0 {
+        println!("Response body is: {}", response_body);
+    }
 
     let _ = http::send_response(
         http::StatusCode::OK,
