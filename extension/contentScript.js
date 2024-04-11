@@ -2,7 +2,7 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = false;
+const debug = true;
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -61,16 +61,10 @@ function insertLearnButton(tweet) {
         cloneBookmarkButton.style.padding = "0 10px"; // Adjust padding as needed
         cloneBookmarkButton.addEventListener('click', function (event) {
             toggleVisibility(tweet, event);
-            // event.stopPropagation(); // Prevent the event from bubbling up to parent elements
-            // const tweetId = extractTweetId(tweet);
-            // if (globalTweetFilterMap.has(tweetId)) {
-            //     const currentValue = globalTweetFilterMap.get(tweetId);
-            //     globalTweetFilterMap.set(tweetId, !currentValue);
-            // }
         });
         const svgElement = cloneBookmarkButton.querySelector('svg');
         if (svgElement) {
-            const newPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13h-3v3h-4v-3H7v-4h3V8h4v3h3v4z";
+            const newPath = "M18.3 5.71a1 1 0 00-1.41 0L12 10.59 7.11 5.7A1 1 0 005.7 7.11L10.59 12 5.7 16.89a1 1 0 101.41 1.41L12 13.41l4.89 4.89a1 1 0 001.41-1.41L13.41 12l4.89-4.89a1 1 0 000-1.4z";
             svgElement.querySelector('path').setAttribute('d', newPath);
         }
         bookmarkButton.parentNode.insertBefore(cloneBookmarkButton, bookmarkButton);
@@ -172,5 +166,5 @@ async function parseState() {
 
 parseState();
 setInterval(updateVisuals, 100);
-setInterval(parseState, 10000);
+setInterval(parseState, 500);
 
