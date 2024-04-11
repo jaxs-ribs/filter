@@ -3,8 +3,6 @@ use llm_interface::api::openai::OpenaiApi;
 use llm_interface::openai::ChatImageContent;
 use llm_interface::openai::ChatImageMessage;
 use llm_interface::openai::ChatImageParams;
-use llm_interface::openai::ChatParams;
-use llm_interface::openai::Message as OpenaiMessage;
 
 pub fn llm_inference(
     tweet_contents: &[String],
@@ -13,22 +11,25 @@ pub fn llm_inference(
     api: &OpenaiApi,
 ) -> anyhow::Result<Vec<bool>> {
     println!("Llm inference was called.");
-    let rules = rules
+    let rules_string = rules
         .iter()
         .enumerate()
         .map(|(i, rule)| format!("{}. {}", i + 1, rule))
         .collect::<Vec<String>>()
         .join("\n");
-    let mut final_message = vec![OpenaiMessage {
+    let mut final_message = vec![ChatImageMessage {
         role: "system".into(),
-        content: system_prompt_text(tweet_contents.len(), rules),
+        content: ChatImageContent::from_text(&system_prompt_text(
+            tweet_contents.len(),
+            &rules_string,
+        )),
     }];
 
     for (tweet, photo_url) in tweet_contents.iter().zip(photo_urls.iter()) {
         let chat_image_content = if let Some(photo_url) = photo_url {
-            ChatImageContent::from_pair(tweet, photo_url);
+            ChatImageContent::from_pair(tweet, photo_url)
         } else {
-            ChatImageContent::from_text(tweet);
+            ChatImageContent::from_text(tweet)
         };
 
         final_message.push(ChatImageMessage {
@@ -44,7 +45,7 @@ pub fn llm_inference(
     Ok(bools)
 }
 
-fn system_prompt_text(tweet_count: usize, rules: &Vec<String>) -> String {
+fn system_prompt_text(tweet_count: usize, rules_string: &str) -> String {
     format!(
         r###"
 You are a helpful assistant that will only answer with 0 or 1.
@@ -54,7 +55,7 @@ Do not answer with anything else but 0 or 1. No part of the answer should contai
 The rules are: 
 {}
 "###,
-        tweet_count, tweet_count, rules
+        tweet_count, tweet_count, rules_string
     )
 }
 
