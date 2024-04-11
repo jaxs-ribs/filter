@@ -10,7 +10,6 @@ pub fn llm_inference(
     rules: &Vec<String>,
     api: &OpenaiApi,
 ) -> anyhow::Result<Vec<bool>> {
-    println!("Llm inference was called.");
     let rules_string = rules
         .iter()
         .enumerate()
@@ -39,7 +38,13 @@ pub fn llm_inference(
     }
 
     let chat_image_params: ChatImageParams = create_chat_params(final_message);
-    let result = OpenaiApi::chat_with_image(&api, chat_image_params)?.content;
+    let result = match OpenaiApi::chat_with_image(&api, chat_image_params) {
+        Ok(response) => response.content,
+        Err(e) => {
+            println!("Error calling OpenAI API: {:?}", e);
+            return Err(e.into());
+        }
+    };
     println!("Openai result: {:?}", result);
     let bools = parse_response_to_bool_array(&result);
     Ok(bools)

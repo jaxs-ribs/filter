@@ -2,7 +2,7 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = true;
+const debug = false;
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -172,5 +172,5 @@ async function parseState() {
 
 parseState();
 setInterval(updateVisuals, 100);
-setInterval(parseState, 500);
+setInterval(parseState, 10000);
 

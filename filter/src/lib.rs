@@ -80,6 +80,15 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         .map(|tweet| tweet["photoUrl"].as_str().map(|url| url.to_string()))
         .collect();
 
+    if tweets_array.len() != photo_urls.len() {
+        println!(
+            "Mismatch in the number of tweets ({}) and photo URLs ({})",
+            tweets_array.len(),
+            photo_urls.len()
+        );
+        return None;
+    }
+
     let should_pass_vec = if debug {
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
