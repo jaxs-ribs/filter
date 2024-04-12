@@ -158,28 +158,6 @@ fn fetch_settings(state: &mut State) -> Option<()> {
     Some(())
 }
 
-// fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
-//     let tweets = extract_tweets(body).ok()?;
-
-//     let tweet_results = if state.is_on {
-//         llm_inference::llm_inference(&tweets, &state.rules, api).ok()?
-//     } else {
-//         tweets.iter().map(|_| false).collect()
-//     };
-//     // TODO: Zen: Sometimes the llm response doesn't return enough responses for all the tweets. Maybe we need to separate them and number them?
-//     // assert_eq!(tweets.len(), tweet_results.len(), "Tweets and results length mismatch");
-
-//     let response_body =
-//         serde_json::to_string(&serde_json::json!({ "tweet_results": tweet_results })).ok()?;
-//     println!("sending tweet results: {}", response_body);
-//     let _ = http::send_response(
-//         http::StatusCode::OK,
-//         Some(default_headers()),
-//         response_body.as_bytes().to_vec(),
-//     );
-//     None
-// }
-
 fn setup(our: &Address) -> OpenaiApi {
     println!("filter: begin");
     if let Err(e) = http::serve_index_html(
