@@ -9,22 +9,33 @@ document.addEventListener('DOMContentLoaded', function() {
         debounceSubmitSettings(); 
     });
     document.getElementById('toggle').addEventListener('change', debounceSubmitSettings);
+    document.getElementById('port').addEventListener('change', function() {
+        const portValue = this.value;
+        chrome.storage.local.set({'port': portValue}, function() {
+            console.log('Port value saved:', portValue);
+        });
+    });
 });
+
 function fetchSettings() {
-    console.log('fetchSettings');
-    fetch('http://localhost:8080/filter:filter:template.os/fetch_settings', {
-        method: 'POST', 
-        headers: {
-            'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({}) 
-    })
-    .then(response => response.json())
-    .then(data => {
-        displayRules(data.rules);
-        setToggleState(data.is_on);
-    })
-    .catch(error => console.error('Error fetching settings:', error));
+    chrome.storage.local.get(['port'], function(result) {
+        const port = result.port || '8080'; 
+        document.getElementById('port').value = port; 
+
+        fetch(`http://localhost:${port}/filter:filter:template.os/fetch_settings`, {
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({}) 
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayRules(data.rules);
+            setToggleState(data.is_on);
+        })
+        .catch(error => console.error('Error fetching settings:', error));
+    });
 }
 
 function displayRules(rules) {
@@ -70,14 +81,21 @@ function debounceSubmitSettings() {
 
     timeoutId = setTimeout(() => {
         submitSettings();
-    }, 200); 
+    }, 20); 
 }
 
 function submitSettings() {
+    document.getElementById('port').addEventListener('change', function() {
+        const port = this.value;
+        chrome.storage.local.set({port: port}, function() {
+            console.log('Port is set to ' + port);
+        });
+    });
+    const port = document.getElementById('port').value || '8080';
     const rules = Array.from(document.querySelectorAll('.rule')).map(input => input.value);
     const is_on = document.getElementById('toggle').checked;
 
-    fetch('http://localhost:8080/filter:filter:template.os/submit_settings', {
+    fetch(`http://localhost:${port}/filter:filter:template.os/submit_settings`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

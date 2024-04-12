@@ -2,7 +2,7 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = false;
+const debug = true;
 
 // Used to prevent duplicate requests
 let isFilteringTweets = false; 
@@ -129,25 +129,30 @@ async function filterTweets() {
             const photoUrl = globalTweetImageMap.has(tweetId) ? globalTweetImageMap.get(tweetId) : null;
             return { tweetId, content, photoUrl };
         });
-    try {
+
+    // Retrieve port from storage
+    chrome.storage.local.get(['port'], async function(result) {
+        const port = result.port || '8080'; 
         const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug });
         console.log(requestBody);
-        const response = await fetch('http://localhost:8080/filter:filter:template.os/filter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: requestBody,
-        });
-        const data = await response.json();
-        const filteredTweetResults = data || [];
+        try {
+            const response = await fetch(`http://localhost:${port}/filter:filter:template.os/filter`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: requestBody,
+            });
+            const data = await response.json();
+            const filteredTweetResults = data || [];
 
-        filteredTweetResults.forEach(({ tweetId, filterBool }) => {
-            globalTweetFilterMap.set(tweetId, filterBool);
-        });
-    } catch (error) {
-        console.error("Failed to filter tweets:", error);
-    } finally {
-        isFilteringTweets = false;
-    }
+            filteredTweetResults.forEach(({ tweetId, filterBool }) => {
+                globalTweetFilterMap.set(tweetId, filterBool);
+            });
+        } catch (error) {
+            console.error("Failed to filter tweets:", error);
+        } finally {
+            isFilteringTweets = false;
+        }
+    });
 }
 
 function populateGlobalTweetMap() {
