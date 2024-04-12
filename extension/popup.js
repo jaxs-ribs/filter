@@ -101,9 +101,9 @@ function submitSettings() {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
+        fetchSettings();
     }).catch(error => console.error('Error submitting settings:', error));
 
-    fetchSettings();
 }
 
 function autoResize() {
