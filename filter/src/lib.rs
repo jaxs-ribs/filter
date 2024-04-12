@@ -2,7 +2,7 @@ use kinode_process_lib::{await_message, call_init, get_blob, http, println, Addr
 use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
 use serde_json::Value;
 
-mod llm_inference;
+mod llm_inference_with_image;
 
 mod helpers;
 use helpers::default_headers;
@@ -92,7 +92,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         println!("Tweet contents: {:?}", tweet_contents.len());
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
-        llm_inference::llm_inference(&tweet_contents, &photo_urls, &state.rules, api).ok()?
+        llm_inference_with_image::llm_inference_with_image(&tweet_contents, &photo_urls, &state.rules, api).ok()?
     } else {
         vec![true; tweet_contents.len()]
     };
