@@ -15,12 +15,22 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Port value saved:', portValue);
         });
     });
+    document.getElementById('api-key').addEventListener('change', function() {
+        const apiKeyValue = this.value;
+        chrome.storage.local.set({'api_key': apiKeyValue}, function() {
+            console.log('API Key value saved:', apiKeyValue);
+        });
+        debounceSubmitSettings();
+    });
 });
 
 function fetchSettings() {
-    chrome.storage.local.get(['port'], function(result) {
+    chrome.storage.local.get(['port', 'api_key'], function(result) {
         const port = result.port || '8080'; 
         document.getElementById('port').value = port; 
+
+        const apiKey = result.api_key || '';
+        document.getElementById('api-key').value = apiKey;
 
         fetch(`http://localhost:${port}/filter:filter:template.os/fetch_settings`, {
             method: 'POST', 
@@ -85,15 +95,10 @@ function debounceSubmitSettings() {
 }
 
 function submitSettings() {
-    document.getElementById('port').addEventListener('change', function() {
-        const port = this.value;
-        chrome.storage.local.set({port: port}, function() {
-            console.log('Port is set to ' + port);
-        });
-    });
     const port = document.getElementById('port').value || '8080';
     const rules = Array.from(document.querySelectorAll('.rule')).map(input => input.value);
     const is_on = document.getElementById('toggle').checked;
+    const api_key = document.getElementById('api-key').value; 
 
     fetch(`http://localhost:${port}/filter:filter:template.os/submit_settings`, {
         method: 'POST',
@@ -102,7 +107,8 @@ function submitSettings() {
         },
         body: JSON.stringify({
             rules: rules,
-            is_on: is_on
+            is_on: is_on,
+            api_key: api_key 
         })
     }).then(response => {
         if (!response.ok) {
