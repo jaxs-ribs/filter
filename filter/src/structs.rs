@@ -44,6 +44,6 @@ impl State {
 pub struct Settings {
     pub rules: Vec<String>,
     pub is_on: bool,
-    pub openai_key: String,
+    pub api_key: String,
 }
 

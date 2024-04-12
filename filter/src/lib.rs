@@ -135,20 +135,22 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
 }
 
 fn submit_settings(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Option<()> {
+    println!("Submit settings!");
     let settings = serde_json::from_slice::<Settings>(body).ok()?;
     state.rules = settings.rules;
     state.is_on = settings.is_on;
-    state.openai_key = Some(settings.openai_key.clone());
+    state.openai_key = Some(settings.api_key.clone());
     state.save();
 
-    api.openai_key = settings.openai_key;
+    api.openai_key = settings.api_key;
     None
 }
 
 fn fetch_settings(state: &mut State) -> Option<()> {
+    println!("Fetch settings!");
     let response_body = serde_json::to_string(&serde_json::json!({
         "rules": state.rules,
-        "is_on": state.is_on
+        "is_on": state.is_on,
     }))
     .ok()?;
 
