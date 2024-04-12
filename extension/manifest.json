@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Filter out Stupidity",
+  "name": "Tweet Filter",
+  "description": "Filter out stupidity from your Twitter feed. Powered by Kinode OS.",
   "version": "1.0",
   "icons": {
     "16": "images/icon16.png",
@@ -13,7 +14,7 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:8080/filter:filter:template.os/*"
+    "http://localhost:8080/main:filter:appattacc.os/*"
   ],
   "background": {
     "service_worker": "background.js"

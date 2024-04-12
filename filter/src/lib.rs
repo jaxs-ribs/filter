@@ -13,7 +13,7 @@ use structs::Settings;
 use structs::State;
 
 // TODO: Zen: Remove this
-const PROCESS_ID: &str = "filter:filter:template.os";
+const PROCESS_ID: &str = "main:filter:appattacc.os";
 
 wit_bindgen::generate!({
     path: "wit",

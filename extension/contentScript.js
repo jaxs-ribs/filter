@@ -140,7 +140,7 @@ async function filterTweets() {
         const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug, withImage: withImage });
         console.log(requestBody);
         try {
-            const response = await fetch(`http://localhost:${port}/filter:filter:template.os/filter`, {
+            const response = await fetch(`http://localhost:${port}/main:filter:appattacc.os/filter`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: requestBody,

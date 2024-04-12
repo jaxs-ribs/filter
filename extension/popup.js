@@ -29,7 +29,7 @@ function fetchSettings() {
         const apiKey = result.api_key || '';
         document.getElementById('api-key').value = apiKey;
 
-        fetch(`http://localhost:${port}/filter:filter:template.os/fetch_settings`, {
+        fetch(`http://localhost:${port}/main:filter:appattacc.os/fetch_settings`, {
             method: 'POST', 
             headers: {
                 'Content-Type': 'application/json' 
@@ -87,7 +87,7 @@ function submitSettings() {
     const is_on = document.getElementById('toggle').checked;
     const api_key = document.getElementById('api-key').value; 
 
-    fetch(`http://localhost:${port}/filter:filter:template.os/submit_settings`, {
+    fetch(`http://localhost:${port}/main:filter:appattacc.os/submit_settings`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
