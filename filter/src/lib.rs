@@ -138,7 +138,7 @@ fn submit_settings(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Optio
     let settings = serde_json::from_slice::<Settings>(body).ok()?;
     state.rules = settings.rules;
     state.is_on = settings.is_on;
-    state.openai_key = Some(settings.openai_key);
+    state.openai_key = Some(settings.openai_key.clone());
     state.save();
 
     api.openai_key = settings.openai_key;
@@ -178,7 +178,7 @@ fn setup(our: &Address, state: &State) -> OpenaiApi {
         panic!("Error binding https paths: {:?}", e);
     }
     // TODO: Zen: Maybe we shouldn't have a default value in the first place? 
-    let Ok(api) = spawn_openai_pkg(our.clone(), &state.openai_key.unwrap_or_default()) else {
+    let Ok(api) = spawn_openai_pkg(our.clone(), &state.openai_key.clone().unwrap_or_default()) else {
         panic!("Failed to spawn openai pkg");
     };
     api
