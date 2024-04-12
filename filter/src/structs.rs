@@ -5,6 +5,7 @@ use kinode_process_lib::{get_state, set_state};
 pub struct State {
     pub rules: Vec<String>,
     pub is_on: bool,
+    pub openai_key: Option<String>,
     // pub filtered_tweets: HashMap<String, bool>,
 }
 
@@ -17,6 +18,7 @@ impl State {
                 "This is a test 3".to_string(),
             ],
             is_on: true,
+            openai_key: None,
             // filtered_tweets: HashMap::new(),
         }
     }
@@ -42,4 +44,6 @@ impl State {
 pub struct Settings {
     pub rules: Vec<String>,
     pub is_on: bool,
+    pub openai_key: String,
 }
+

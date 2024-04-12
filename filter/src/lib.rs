@@ -13,7 +13,6 @@ use structs::State;
 
 // TODO: Zen: Remove this
 const PROCESS_ID: &str = "filter:filter:template.os";
-const OPENAI_API: &str = include_str!("../../pkg/.openai_key");
 
 wit_bindgen::generate!({
     path: "wit",
@@ -25,13 +24,13 @@ wit_bindgen::generate!({
 
 call_init!(init);
 
-fn handle_http_messages(message: &Message, api: &OpenaiApi, state: &mut State) {
+fn handle_http_messages(message: &Message, api: &mut OpenaiApi, state: &mut State) {
     if let Message::Request { ref body, .. } = message {
         handle_request(body, api, state);
     }
 }
 
-fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> {
+fn handle_request(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Option<()> {
     let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
     let http_request = server_request.request()?;
     match http_request.method().ok() {
@@ -51,7 +50,7 @@ fn handle_request(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()>
                     fetch_settings(state);
                 }
                 "/submit_settings" => {
-                    submit_settings(&body.bytes, state);
+                    submit_settings(&body.bytes, api, state);
                 }
                 _ => {}
             }
@@ -135,11 +134,14 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
     None
 }
 
-fn submit_settings(body: &[u8], state: &mut State) -> Option<()> {
+fn submit_settings(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Option<()> {
     let settings = serde_json::from_slice::<Settings>(body).ok()?;
     state.rules = settings.rules;
     state.is_on = settings.is_on;
+    state.openai_key = Some(settings.openai_key);
     state.save();
+
+    api.openai_key = settings.openai_key;
     None
 }
 
@@ -158,7 +160,7 @@ fn fetch_settings(state: &mut State) -> Option<()> {
     Some(())
 }
 
-fn setup(our: &Address) -> OpenaiApi {
+fn setup(our: &Address, state: &State) -> OpenaiApi {
     println!("filter: begin");
     if let Err(e) = http::serve_index_html(
         &our,
@@ -175,15 +177,16 @@ fn setup(our: &Address) -> OpenaiApi {
     ) {
         panic!("Error binding https paths: {:?}", e);
     }
-    let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {
+    // TODO: Zen: Maybe we shouldn't have a default value in the first place? 
+    let Ok(api) = spawn_openai_pkg(our.clone(), &state.openai_key.unwrap_or_default()) else {
         panic!("Failed to spawn openai pkg");
     };
     api
 }
 
 fn init(our: Address) {
-    let api = setup(&our);
     let mut state = State::fetch();
+    let mut api = setup(&our, &state);
 
     while let Ok(message) = await_message() {
         if message.source().node != our.node {
@@ -191,7 +194,7 @@ fn init(our: Address) {
         }
 
         if message.source().process == "http_server:distro:sys" {
-            handle_http_messages(&message, &api, &mut state);
+            handle_http_messages(&message, &mut api, &mut state);
             state.save();
         }
     }

@@ -909,7 +909,7 @@ checksum = "01cda141df6706de531b6c46c3a33ecca755538219bd484262fa09410c13539c"
 [[package]]
 name = "llm_interface"
 version = "0.1.0"
-source = "git+https://github.com/kinode-dao/llm?branch=master#94811660e341a83a442f9175cfd86b22bd543cb4"
+source = "git+https://github.com/kinode-dao/llm?branch=master#c9b58fad07aac4243855cad4a601ef4fe66cdae0"
 dependencies = [
  "anyhow",
  "kinode_process_lib",
