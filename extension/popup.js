@@ -2,13 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchSettings();
     document.getElementById('add-rule').addEventListener('click', function() {
         addRule();
-        debounceSubmitSettings(); 
     });
     document.getElementById('remove-rule').addEventListener('click', function() {
         removeRule();
-        debounceSubmitSettings(); 
     });
-    document.getElementById('toggle').addEventListener('change', debounceSubmitSettings);
     document.getElementById('port').addEventListener('change', function() {
         const portValue = this.value;
         chrome.storage.local.set({'port': portValue}, function() {
@@ -20,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.storage.local.set({'api_key': apiKeyValue}, function() {
             console.log('API Key value saved:', apiKeyValue);
         });
-        debounceSubmitSettings();
     });
+    document.getElementById('save').addEventListener('click', submitSettings);
 });
 
 function fetchSettings() {
@@ -55,8 +52,7 @@ function displayRules(rules) {
         const textareaElement = document.createElement('textarea'); 
         textareaElement.classList.add('rule');
         textareaElement.value = rule; 
-        textareaElement.addEventListener('input', debounceSubmitSettings); 
-        textareaElement.addEventListener('input', autoResize, false); // Add this line
+        textareaElement.addEventListener('input', autoResize, false); 
         container.appendChild(textareaElement);
     });
 }
@@ -71,8 +67,7 @@ function addRule() {
     const textareaElement = document.createElement('textarea');
     textareaElement.classList.add('rule');
     textareaElement.placeholder = "Enter a rule";
-    textareaElement.addEventListener('input', debounceSubmitSettings); 
-    textareaElement.addEventListener('input', autoResize, false); // Add this line
+    textareaElement.addEventListener('input', autoResize, false); 
     container.appendChild(textareaElement);
 }
 
@@ -85,14 +80,6 @@ function removeRule() {
 }
 
 let timeoutId;
-
-function debounceSubmitSettings() {
-    clearTimeout(timeoutId);
-
-    timeoutId = setTimeout(() => {
-        submitSettings();
-    }, 20); 
-}
 
 function submitSettings() {
     const port = document.getElementById('port').value || '8080';
