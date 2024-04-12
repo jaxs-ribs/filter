@@ -1,16 +1,19 @@
 {
-    "name": "filter",
-    "description": "",
+    "name": "Filter",
+    "description": "Filter out stupidity from your Twitter feed.",
     "image": "https://imgur.com/a/ewbLbk5",
     "properties": {
         "package_name": "filter",
         "current_version": "0.1.0",
-        "publisher": "template.os",
-        "mirrors": [],
+        "publisher": "appattacc.os",
+        "mirrors": [
+            "appattacc.os"
+        ],
         "code_hashes": {
-            "0.1.0": ""
+            "0.1.0": "206233bc0d815b9241ff7c0349278176440f541c961f6bd3ee40c7060096431f"
         }
     },
-    "external_url": "",
-    "animation_url": ""
+    "external_url": "https://github.com/jaxs-ribs/filter",
+    "animation_url": "",
+    "website": "https://github.com/jaxs-ribs/filter"
 }
