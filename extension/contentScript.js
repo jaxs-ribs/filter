@@ -88,7 +88,7 @@ async function updateVisuals() {
         const textsDom = tweet.querySelectorAll("[data-testid=tweetText] > *");
         let tweetId = extractTweetId(tweet);
         insertLearnButton(tweet);
-        if (!globalTweetMap.has(tweetId)) {
+        if (!globalTweetFilterMap.has(tweetId)) {
             greyOutTweet(textsDom);
         } else {
             let should_pass = globalTweetFilterMap.get(tweetId);
