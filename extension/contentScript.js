@@ -2,10 +2,14 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
+// Debug flag to not use the model, but random values.
 const debug = false;
 
 // Used to prevent duplicate requests
 let isFilteringTweets = false; 
+
+// Whether to use the image model, or just text. 
+let withImage = false;
 
 function extractTweetId(tweet) {
     const linkElement = tweet.querySelector('a[href*="/status/"]');
@@ -133,7 +137,7 @@ async function filterTweets() {
     // Retrieve port from storage
     chrome.storage.local.get(['port'], async function(result) {
         const port = result.port || '8080'; 
-        const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug });
+        const requestBody = JSON.stringify({ tweets: tweetsData, debug: debug, withImage: withImage });
         console.log(requestBody);
         try {
             const response = await fetch(`http://localhost:${port}/filter:filter:template.os/filter`, {

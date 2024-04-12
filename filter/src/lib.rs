@@ -3,6 +3,7 @@ use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
 use serde_json::Value;
 
 mod llm_inference_with_image;
+mod llm_inference;
 
 mod helpers;
 use helpers::default_headers;
@@ -64,6 +65,7 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
     let tweets_data: Value = serde_json::from_slice(body).ok()?;
     let tweets_array = tweets_data["tweets"].as_array()?;
     let debug = tweets_data["debug"].as_bool().unwrap_or(true);
+    let with_image = tweets_data["withImage"].as_bool().unwrap_or(false);
 
     let tweet_ids: Vec<String> = tweets_array
         .iter()
@@ -92,7 +94,11 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         println!("Tweet contents: {:?}", tweet_contents.len());
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
-        llm_inference_with_image::llm_inference_with_image(&tweet_contents, &photo_urls, &state.rules, api).ok()?
+        if with_image {
+            llm_inference_with_image::llm_inference_with_image(&tweet_contents, &photo_urls, &state.rules, api).ok()?
+        } else {
+            llm_inference::llm_inference(&tweet_contents, &state.rules, api).ok()?
+        }
     } else {
         vec![true; tweet_contents.len()]
     };
@@ -108,12 +114,6 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
 
     let mut tweet_results = Vec::new();
     for (tweet_id, should_pass) in tweet_ids.into_iter().zip(should_pass_vec) {
-        // state // TODO: Zen: Later
-        //     .filtered_tweets
-        //     .entry(&tweet_id)
-        //     .and_modify(|x| *x = should_pass)
-        //     .or_insert(should_pass);
-
         tweet_results.push(serde_json::json!({
             "tweetId": tweet_id,
             "filterBool": should_pass,
