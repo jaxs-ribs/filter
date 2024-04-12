@@ -2,7 +2,7 @@ let globalTweetMap = new Map();
 let globalTweetImageMap = new Map();
 let globalTweetFilterMap = new Map();
 
-const debug = true;
+const debug = false;
 
 // Used to prevent duplicate requests
 let isFilteringTweets = false; 
