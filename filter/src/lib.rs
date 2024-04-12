@@ -173,7 +173,7 @@ fn setup(our: &Address) -> OpenaiApi {
             "/filter",
         ],
     ) {
-        panic!("Error serving index html: {:?}", e);
+        panic!("Error binding https paths: {:?}", e);
     }
     let Ok(api) = spawn_openai_pkg(our.clone(), OPENAI_API) else {
         panic!("Failed to spawn openai pkg");
