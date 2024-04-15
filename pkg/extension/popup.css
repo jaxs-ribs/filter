@@ -1,96 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding: 20px;
+    font-family: 'Montserrat', Arial, sans-serif;
     background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
     color: #333;
-    width: 600px; /* Adjust width as needed */
-    height: 400px; /* Adjust height as needed */
-    overflow: auto; /* Add scrollbars if content overflows */
+    width: 600px; /* Adjusted width to make popup wider */
+}
+
+input[type="number"], input[type="text"], input[type="checkbox"] {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;  
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 #rules-container {
-    margin: 0; /* Reduce margin if necessary */
-    padding: 0; /* Reduce padding if necessary */
-    width: 100%; /* Ensure it takes full available width */
+    margin-bottom: 20px;
 }
 
 .rule {
-    width: 100%; /* Full width */
-    min-height: 40px; /* Initial height */
-    padding: 10px; /* Padding inside the textarea */
-    margin-bottom: 10px; /* Margin to the next element */
-    border: 1px solid #ccc; /* Border color */
-    border-radius: 4px; /* Rounded corners */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    font-size: 12px; /* Text size */
-    resize: none; /* Disable resizing */
-    overflow: hidden; /* Hide the scrollbar */
-}
-
-.rule button.remove-rule {
-    width: 35px;
-    height: 35px;
-    margin-left: 5px;
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    box-shadow: inset 0 1px 3px #eee;
     border-radius: 4px;
-    cursor: pointer;
+    resize: vertical;
+    overflow: auto;
 }
 
-.rule button.remove-rule:hover {
-    background-color: #cc0000;
-}
-
-button#add-rule, button#remove-rule {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-button#add-rule:hover, button#remove-rule:hover {
-    background-color: #0056b3;
-}
-
-label[for="toggle"] {
-    margin-right: 10px;
-}
-
-input#toggle {
+#toggle {
     transform: scale(1.5);
-    margin-bottom: 20px;
-}
-.rule input[type="text"] {
-    width: 100%; /* Ensure full width */
-    min-height: 80px; /* Increased height to accommodate more text */
-    padding: 10px; /* Adequate padding for text input */
-    margin-bottom: 10px; /* Space between inputs */
-    border: 1px solid #ccc; /* Border styling */
-    border-radius: 4px; /* Rounded corners */
-    box-sizing: border-box; /* Box sizing to include padding in width */
-    font-size: 12px; /* Improved readability */
-}
-
-button#add-rule, button#remove-rule {
-    width: 25px; /* Smaller width */
-    height: 25px; /* Smaller height */
-    padding: 5px; /* Reduced padding */
-    font-size: 14px; /* Adjust font size as needed */
-    line-height: 15px; /* Adjust line height for vertical alignment */
-    text-align: center; /* Center the "+" or "-" sign */
-    margin-right: 10px; /* Margin to separate from other elements */
-    background-color: #007bff; /* Background color */
-    color: white; /* Text color */
-    border: none; /* No border */
-    border-radius: 4px; /* Rounded corners */
-    cursor: pointer; /* Pointer cursor on hover */
-}
-
-/* Hover effect for buttons */
-button#add-rule:hover, button#remove-rule:hover {
-    background-color: #0056b3;
+    margin-right: 10px;
 }
