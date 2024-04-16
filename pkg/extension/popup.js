@@ -19,22 +19,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     document.getElementById('save').addEventListener('click', submitSettings);
+
+    document.getElementById('toggle').addEventListener('click', showCheckmark);
+    document.getElementById('checkmark').addEventListener('click', toggleCheckmark);
 });
 
 function fetchSettings() {
     chrome.storage.local.get(['port', 'api_key'], function(result) {
-        const port = result.port || '8080'; 
-        document.getElementById('port').value = port; 
+        const port = result.port || '8080';
+        document.getElementById('port').value = port;
 
         const apiKey = result.api_key || '';
         document.getElementById('api-key').value = apiKey;
 
         fetch(`http://localhost:${port}/main:filter:appattacc.os/fetch_settings`, {
-            method: 'POST', 
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json' 
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({}) 
+            body: JSON.stringify({})
         })
         .then(response => response.json())
         .then(data => {
@@ -47,12 +50,12 @@ function fetchSettings() {
 
 function displayRules(rules) {
     const container = document.getElementById('rules-container');
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     rules.forEach(rule => {
-        const textareaElement = document.createElement('textarea'); 
+        const textareaElement = document.createElement('textarea');
         textareaElement.classList.add('rule');
-        textareaElement.value = rule; 
-        textareaElement.addEventListener('input', autoResize, false); 
+        textareaElement.value = rule;
+        textareaElement.addEventListener('input', autoResize, false);
         container.appendChild(textareaElement);
     });
 }
@@ -67,7 +70,7 @@ function addRule() {
     const textareaElement = document.createElement('textarea');
     textareaElement.classList.add('rule');
     textareaElement.placeholder = "Enter a rule";
-    textareaElement.addEventListener('input', autoResize, false); 
+    textareaElement.addEventListener('input', autoResize, false);
     container.appendChild(textareaElement);
 }
 
@@ -85,7 +88,7 @@ function submitSettings() {
     const port = document.getElementById('port').value || '8080';
     const rules = Array.from(document.querySelectorAll('.rule')).map(input => input.value);
     const is_on = document.getElementById('toggle').checked;
-    const api_key = document.getElementById('api-key').value; 
+    const api_key = document.getElementById('api-key').value;
 
     fetch(`http://localhost:${port}/main:filter:appattacc.os/submit_settings`, {
         method: 'POST',
@@ -95,7 +98,7 @@ function submitSettings() {
         body: JSON.stringify({
             rules: rules,
             is_on: is_on,
-            api_key: api_key 
+            api_key: api_key
         })
     }).then(response => {
         if (!response.ok) {
@@ -109,4 +112,31 @@ function submitSettings() {
 function autoResize() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
+}
+
+function toggleCheckmark(e) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    var checkmark = document.getElementById("checkmark");
+    var toggle = document.getElementById("toggle");
+    if (toggle.checked) {
+        checkmark.style.display = "none";
+        toggle.checked = false;
+    } else {
+        checkmark.style.display = "inline";
+        toggle.checked = true;
+    }
+}
+
+function showCheckmark() {
+
+    var checkmark = document.getElementById("checkmark");
+    var toggle = document.getElementById("toggle");
+    if (toggle.checked) {
+        checkmark.style.display = "inline";
+    } else {
+        checkmark.style.display = "none";
+    }
 }
