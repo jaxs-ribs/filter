@@ -9,3 +9,4 @@ pkg/*.wasm
 */wit/
 */process_env
 pkg/.openai_key
+.DS_Store
