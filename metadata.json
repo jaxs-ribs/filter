@@ -1,7 +1,7 @@
 {
     "name": "Filter",
     "description": "Filter out stupidity from your Twitter feed.",
-    "image": "https://imgur.com/a/ewbLbk5",
+    "image": "https://i.imgur.com/gk6Z0tD.png",
     "properties": {
         "package_name": "filter",
         "current_version": "0.1.0",

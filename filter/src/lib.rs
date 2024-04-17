@@ -2,8 +2,8 @@ use kinode_process_lib::{await_message, call_init, get_blob, http, println, Addr
 use llm_interface::api::openai::{spawn_openai_pkg, OpenaiApi};
 use serde_json::Value;
 
-mod llm_inference_with_image;
 mod llm_inference;
+mod llm_inference_with_image;
 
 mod helpers;
 use helpers::default_headers;
@@ -11,9 +11,6 @@ use helpers::default_headers;
 mod structs;
 use structs::Settings;
 use structs::State;
-
-// TODO: Zen: Remove this
-const PROCESS_ID: &str = "main:filter:appattacc.os";
 
 wit_bindgen::generate!({
     path: "wit",
@@ -25,13 +22,18 @@ wit_bindgen::generate!({
 
 call_init!(init);
 
-fn handle_http_messages(message: &Message, api: &mut OpenaiApi, state: &mut State) {
+fn handle_http_messages(our: &Address, message: &Message, api: &mut OpenaiApi, state: &mut State) {
     if let Message::Request { ref body, .. } = message {
-        handle_request(body, api, state);
+        handle_request(our, body, api, state);
     }
 }
 
-fn handle_request(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Option<()> {
+fn handle_request(
+    our: &Address,
+    body: &[u8],
+    api: &mut OpenaiApi,
+    state: &mut State,
+) -> Option<()> {
     let server_request = http::HttpServerRequest::from_bytes(body).ok()?;
     let http_request = server_request.request()?;
     match http_request.method().ok() {
@@ -42,7 +44,7 @@ fn handle_request(body: &[u8], api: &mut OpenaiApi, state: &mut State) -> Option
         }
         Some(http::Method::POST) => {
             let body = get_blob()?;
-            let bound_path = http_request.bound_path(Some(PROCESS_ID));
+            let bound_path = http_request.bound_path(Some(&our.process()));
             match bound_path {
                 "/filter" => {
                     filter_tweets(&body.bytes, api, state);
@@ -95,7 +97,13 @@ fn filter_tweets(body: &[u8], api: &OpenaiApi, state: &mut State) -> Option<()> 
         tweet_contents.iter().map(|_| rand::random()).collect()
     } else if state.is_on && state.rules.len() > 0 && tweet_contents.len() > 0 {
         if with_image {
-            llm_inference_with_image::llm_inference_with_image(&tweet_contents, &photo_urls, &state.rules, api).ok()?
+            llm_inference_with_image::llm_inference_with_image(
+                &tweet_contents,
+                &photo_urls,
+                &state.rules,
+                api,
+            )
+            .ok()?
         } else {
             llm_inference::llm_inference(&tweet_contents, &state.rules, api).ok()?
         }
@@ -163,7 +171,6 @@ fn fetch_settings(state: &mut State) -> Option<()> {
 }
 
 fn setup(our: &Address, state: &State) -> OpenaiApi {
-    println!("filter: begin");
     if let Err(e) = http::serve_index_html(
         &our,
         "ui",
@@ -179,8 +186,9 @@ fn setup(our: &Address, state: &State) -> OpenaiApi {
     ) {
         panic!("Error binding https paths: {:?}", e);
     }
-    // TODO: Zen: Maybe we shouldn't have a default value in the first place? 
-    let Ok(api) = spawn_openai_pkg(our.clone(), &state.openai_key.clone().unwrap_or_default()) else {
+    // TODO: Zen: Maybe we shouldn't have a default value in the first place?
+    let Ok(api) = spawn_openai_pkg(our.clone(), &state.openai_key.clone().unwrap_or_default())
+    else {
         panic!("Failed to spawn openai pkg");
     };
     api
@@ -196,7 +204,7 @@ fn init(our: Address) {
         }
 
         if message.source().process == "http_server:distro:sys" {
-            handle_http_messages(&message, &mut api, &mut state);
+            handle_http_messages(&our, &message, &mut api, &mut state);
             state.save();
         }
     }
