@@ -4,13 +4,13 @@
     "image": "https://i.imgur.com/gk6Z0tD.png",
     "properties": {
         "package_name": "filter",
-        "current_version": "0.1.0",
+        "current_version": "0.1.1",
         "publisher": "appattacc.os",
         "mirrors": [
             "appattacc.os"
         ],
         "code_hashes": {
-            "0.1.0": "d1106bad13ae7b20078b1f1b5e9899de49033c33d6f7d6551c63d2b87a8a26a8"
+            "0.1.1": "9975530f73520b375277f28baaf4a859de06d3d534e70cd1d537e78ea2af3196"
         }
     },
     "external_url": "https://github.com/jaxs-ribs/filter",
